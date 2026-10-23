@@ -6,6 +6,7 @@ export class AuthorizationMiddleware extends Middleware {
     static protectedPaths = ["/api/*", "/protected/*"];
 
     use = async (c: Context, next: Next) => {
+        console.log("AuthorizationMiddleware");
         await next();
     }
 }
