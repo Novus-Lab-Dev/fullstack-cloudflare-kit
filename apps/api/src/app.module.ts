@@ -1,7 +1,9 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 import type { AppEnv } from "./common/interfaces/app-env.interface";
 import { MiddlewareRegistry } from "./common/middleware";
 import { setupOpenApi } from "./common/openapi/openapi.service";
+import { ResponseHelper } from "./common/helpers/response.helper";
 import { UserModule } from "./api/user/user.module";
 
 
@@ -34,7 +36,23 @@ export class AppModule {
         setupOpenApi(this.app, "/docs");
     }
 
-    notFound() { }
-    onError() { }
+    notFound() {
+        this.app.notFound((c: Context<AppEnv>) =>
+            ResponseHelper.error(`Route ${c.req.method} ${c.req.path} not found`, {
+                status: 404,
+                code: "NOT_FOUND",
+            })
+        );
+    }
+
+    onError() {
+        this.app.onError((err: Error, c: Context<AppEnv>) => {
+            console.error(err);
+            return ResponseHelper.error(err.message || "Internal Server Error", {
+                status: 500,
+                code: "SERVER_ERROR",
+            });
+        });
+    }
 }
 
