@@ -1,14 +1,14 @@
 import { Hono } from "hono";
+import type { AppEnv } from "../interfaces/app-env.interface";
 import { LoggerMiddleware } from "./logger.middleware";
 import { AuthorizationMiddleware } from "./authorization.middleware";
 
 export class MiddlewareRegistry {
-    constructor(app: Hono) {
+    constructor(app: Hono<AppEnv>) {
         this.register(app);
     }
 
-
-    register(app: Hono) {
+    register(app: Hono<AppEnv>) {
         const [
             loggerMiddleware,
             authorizationMiddleware,

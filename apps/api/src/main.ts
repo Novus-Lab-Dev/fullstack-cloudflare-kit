@@ -1,11 +1,12 @@
 import { Hono } from 'hono'
+import type { AppEnv } from './common/interfaces/app-env.interface'
 import { AppModule } from './app.module'
 
 class AppBootstrap {
-  app: Hono;
+  app: Hono<AppEnv>;
 
   constructor() {
-    this.app = new Hono();
+    this.app = new Hono<AppEnv>();
     this.init()
   }
 
