@@ -14,6 +14,7 @@ export type RouteOptions = {
     summary?: string;
     tags?: string[];
 };
+export type HandlerContext = Context<AppEnv>;
 
 type Route = {
     method: "get" | "post" | "put" | "patch" | "delete";

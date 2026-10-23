@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// --- Create User Body Schema ---
-
 export const CreateUserSchema = z.object({
     email: z.string().email().describe("User email address"),
     name: z.string().min(1).describe("User display name"),
@@ -10,7 +8,6 @@ export const CreateUserSchema = z.object({
 
 export type CreateUserDto = z.infer<typeof CreateUserSchema>;
 
-// --- List Users Query Schema ---
 
 export const ListUsersQuerySchema = z.object({
     page: z.coerce.number().int().min(1).optional().describe("Page number"),
