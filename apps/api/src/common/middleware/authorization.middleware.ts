@@ -1,13 +1,15 @@
 import { Context, Next } from "hono";
 import { Middleware } from "./middleware.interface";
 import { JwtHelper } from "../auth/jwt.helper";
+import { AppEnv } from "../interfaces/app-env.interface";
+import type { User } from "../interfaces/user.interface";
 
 
 export class AuthorizationMiddleware extends Middleware {
     static protectedPath = "api/*";
     protected helper = new JwtHelper();
 
-    use = async (c: Context, next: Next) => {
+    use = async (c: Context<AppEnv>, next: Next) => {
         console.log("AuthorizationMiddleware");
         const token = this.getToken(c);
 
@@ -15,13 +17,14 @@ export class AuthorizationMiddleware extends Middleware {
             throw new Error("Authorization header is missing");
         }
 
-
-        if (!this.helper.verify(token, c)) {
+        let payload: User;
+        try {
+            payload = await this.helper.verify(token, c);
+        } catch {
             throw new Error("Invalid token");
         }
 
-        const payload = this.helper.verify(token, c);
-        c.set("user", payload)
+        c.set("user", payload);
 
         await next();
     }
