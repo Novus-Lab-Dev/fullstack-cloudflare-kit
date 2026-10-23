@@ -72,7 +72,7 @@ export function Delete(path: string, options?: RouteOptions) {
 // --- Base Controller (auto-validates via zod) ---
 
 export class IController {
-    constructor(protected readonly app: Hono<AppEnv>, private readonly prefix: string) {
+    constructor(protected readonly app: Hono<AppEnv>, private readonly prefix: string = "") {
         const routes: AnyRoute[] = (this.constructor as { routes?: AnyRoute[] }).routes ?? [];
 
         registerRoutesForDocs(

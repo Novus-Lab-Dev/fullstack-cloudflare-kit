@@ -12,7 +12,7 @@ export class UserController extends IController {
     private userService = new UserService(DBClient.client);
 
     constructor(app: Hono<AppEnv>) {
-        super(app, "/");
+        super(app);
     }
 
     @Post("/", {
