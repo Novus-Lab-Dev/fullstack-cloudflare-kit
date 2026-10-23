@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { LoggerMiddleware } from "./common/logger.middleware";
 
 export class AppModule {
     app: Hono
@@ -11,9 +12,10 @@ export class AppModule {
     }
 
     middleware() {
-        this.app.use('*', async (c, next) => {
-            await next();
-        });
+        const [logger] = [
+            new LoggerMiddleware()
+        ];
+        this.app.use("*", logger.use);
     }
 
     routes() {
