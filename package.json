@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "dev": "dekit attach",
+    "build": "dekit build"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}

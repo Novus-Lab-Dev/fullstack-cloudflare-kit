@@ -1,0 +1,5 @@
+tasks:
+  api:
+    cwd: apps/api
+    cmd: ["bun", "run", "dev"]
+    autostart: true
