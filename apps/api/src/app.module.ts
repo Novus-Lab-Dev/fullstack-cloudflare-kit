@@ -28,7 +28,8 @@ export class AppModule {
 
     routes() {
         this.modules.forEach(module => {
-            new module(this.app);
+            const appModule = new module();
+            this.app.route("/", appModule.geApp())
         });
     }
 
