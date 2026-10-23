@@ -9,6 +9,7 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { usersTable } from "../../db/schema/users.schema";
 
 export class UserController extends IController {
+    static basePath?: string | undefined = "/users";
     private userService = new UserService(DBClient.client);
 
     constructor(app: Hono<AppEnv>) {
