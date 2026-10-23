@@ -3,19 +3,37 @@
   "name": "api",
   "main": "src/main.ts",
   "compatibility_date": "2026-10-23",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "rules": [
+    {
+      "globs": ["**/*.mjml"],
+      "fallthrough": false,
+      "type": "Text"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "api-db",
       "database_id": "fb496481-7667-4820-a3db-ed5e56559097"
     }
-  ]
+  ],
+  "vars": {
+    "EMAIL_FROM": "notify@example.com",
+    "EMAIL_FROM_NAME": "SMS App",
+    "MAILCHANNELS_ENDPOINT": "https://api.mailchannels.net/tx/v1/send"
+  }
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
+  // NOTE: for MailChannels Cloud (paid) add MAILCHANNELS_ACCOUNT_KEY and
+  // MAILCHANNELS_AUTH_TOKEN via `wrangler secret put ...` and set
+  // MAILCHANNELS_ENDPOINT to your dedicated endpoint.
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",

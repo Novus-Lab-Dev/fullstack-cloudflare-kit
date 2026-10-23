@@ -1,0 +1,34 @@
+<mjml>
+  <mj-body background-color="#f4f5f7">
+    <!-- Hidden preview text shown in inbox lists -->
+    <mj-raw><div class="preheader" style="display:none;max-height:0;overflow:hidden">{{preheader}}</div></mj-raw>
+
+    <!-- Header / brand bar -->
+    <mj-section background-color="#ffffff" padding="24px 24px 8px">
+      <mj-column>
+        <mj-text color="#2563eb" font-size="14px" font-weight="bold" letter-spacing="0.5px">{{brandName}}</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Title -->
+    <mj-section background-color="#ffffff" padding="8px 24px 8px">
+      <mj-column>
+        <mj-text color="#111827" font-size="22px" line-height="28px" font-weight="bold">{{heading}}</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main body: raw HTML injected at runtime via {{{content}}} -->
+    <mj-section background-color="#ffffff" padding="8px 24px 24px">
+      <mj-column>
+        <mj-raw><div style="color:#4b5563;font-size:15px;line-height:24px">{{{content}}}</div></mj-raw>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f4f5f7" padding="16px 24px">
+      <mj-column>
+        <mj-text color="#9ca3af" font-size="12px" line-height="18px" align="center">{{footerText}}</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
