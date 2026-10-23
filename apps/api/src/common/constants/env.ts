@@ -7,7 +7,7 @@ interface EnvironmentVariables {
 }
 
 
-class Env {
+class Environment {
     env: EnvironmentVariables
     constructor(c: Context) {
         this.env = env(c)
