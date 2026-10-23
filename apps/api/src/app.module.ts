@@ -15,7 +15,7 @@ export class AppModule {
         this.app = app;
         this.useMiddlewares();
         this.routes();
-        this.setupDocs();
+        // this.setupDocs();
         this.notFound();
         this.onError();
     }
@@ -31,7 +31,7 @@ export class AppModule {
     }
 
     setupDocs() {
-        setupOpenApi(this.app, "/doc");
+        setupOpenApi(this.app, "/docs");
     }
 
     notFound() { }
