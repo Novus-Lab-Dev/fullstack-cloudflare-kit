@@ -16,15 +16,8 @@ export class MiddlewareRegistry {
                 new LoggerMiddleware(),
                 new AuthorizationMiddleware(),
             ];
-        app.use("*", loggerMiddleware.use);
 
-        app.use(
-            AuthorizationMiddleware.protectedPath,
-            authorizationMiddleware.use
-        );
-        // app.on("*",
-        //     AuthorizationMiddleware.protectedPaths,
-        //     authorizationMiddleware.use
-        // );
+        app.use("*", loggerMiddleware.use); // logger
+        app.use(AuthorizationMiddleware.protectedPath, authorizationMiddleware.use); //authorization
     }
 }
