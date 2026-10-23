@@ -3,34 +3,47 @@ import type { Context } from "hono";
 import type { z } from "zod";
 import type { AppEnv } from "./app-env.interface";
 import { validateBody, validateQuery } from "../helpers/validation.helper";
-import type { ValidateResult } from "../helpers/validation.helper";
 import { registerRoutesForDocs } from "../openapi/openapi.service";
 
 // --- Route options with zod schemas ---
 
-export type RouteOptions = {
+export type RouteSchema = {
     body?: z.ZodType<any>;
     query?: z.ZodType<any>;
     summary?: string;
     tags?: string[];
 };
+export type RouteOptions = RouteSchema;
 export type HandlerContext = Context<AppEnv>;
 
-type Route = {
-    method: "get" | "post" | "put" | "patch" | "delete";
-    path: string;
-    handler: (c: Context<AppEnv>, body?: any, query?: any) => any;
-    options?: RouteOptions;
+// --- Handler payload types inferred from the schema passed to the decorator ---
+
+type InferBody<S> = S extends { body: z.ZodType<infer B> } ? B : never;
+type InferQuery<S> = S extends { query: z.ZodType<infer Q> } ? Q : never;
+
+export type HandlerPayload<S extends RouteSchema = RouteSchema> = {
+    c: HandlerContext;
+    body: InferBody<S>;
+    query: InferQuery<S>;
 };
 
-function addToRoutes(target: object, route: Route) {
-    const cls = target.constructor as { routes?: Route[] };
+type Route<S extends RouteSchema = RouteSchema> = {
+    method: "get" | "post" | "put" | "patch" | "delete";
+    path: string;
+    handler: (c: HandlerContext, body: InferBody<S>, query: InferQuery<S>) => any;
+    options?: S;
+};
+
+type AnyRoute = Route<any>;
+
+function addToRoutes(target: object, route: AnyRoute) {
+    const cls = target.constructor as { routes?: AnyRoute[] };
     (cls.routes ??= []).push(route);
 }
 
 // --- Route decorators ---
 
-function defineRoute(method: Route["method"], path: string, options?: RouteOptions) {
+function defineRoute<S extends RouteSchema>(method: Route["method"], path: string, options?: S) {
     return (target: object, _key: string, desc: PropertyDescriptor) => {
         addToRoutes(target, { method, path, handler: desc.value, options });
     };
@@ -60,7 +73,7 @@ export function Delete(path: string, options?: RouteOptions) {
 
 export class IController {
     constructor(protected readonly app: Hono<AppEnv>, private readonly prefix: string) {
-        const routes: Route[] = (this.constructor as { routes?: Route[] }).routes ?? [];
+        const routes: AnyRoute[] = (this.constructor as { routes?: AnyRoute[] }).routes ?? [];
 
         registerRoutesForDocs(
             routes.map(({ method, path, options }) => ({
@@ -75,17 +88,17 @@ export class IController {
             const bound = handler.bind(this);
 
             const wrapped = async (c: Context<AppEnv>) => {
-                let body: any;
-                let query: any;
+                let body: unknown;
+                let query: unknown;
 
                 if (options?.body) {
-                    const result: ValidateResult<any> = await validateBody(c, options.body);
+                    const result = await validateBody(c, options.body);
                     if (!result.valid) return result.response;
                     body = result.data;
                 }
 
                 if (options?.query) {
-                    const result: ValidateResult<any> = validateQuery(c, options.query);
+                    const result = validateQuery(c, options.query);
                     if (!result.valid) return result.response;
                     query = result.data;
                 }
