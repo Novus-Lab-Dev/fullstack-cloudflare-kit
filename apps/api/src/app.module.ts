@@ -12,7 +12,6 @@ export class AppModule {
 
     middleware() {
         this.app.use('*', async (c, next) => {
-            console.log('Middleware executed');
             await next();
         });
     }
