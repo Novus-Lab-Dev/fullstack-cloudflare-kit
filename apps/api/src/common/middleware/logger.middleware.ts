@@ -1,6 +1,6 @@
 import { Context, Next } from 'hono'
 import { logger } from 'hono/logger'
-import { Middleware } from './interfaces/middleware.interface';
+import { Middleware } from './middleware.interface';
 
 
 export class LoggerMiddleware extends Middleware {
