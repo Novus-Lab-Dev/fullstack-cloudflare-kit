@@ -1,4 +1,4 @@
-import { Context, Hono } from 'hono'
+import { Context } from 'hono'
 import { env } from 'hono/adapter'
 
 interface EnvironmentVariables {
@@ -7,7 +7,7 @@ interface EnvironmentVariables {
 }
 
 
-class Environment {
+export class Environment {
     env: EnvironmentVariables
     constructor(c: Context) {
         this.env = env(c)
@@ -20,5 +20,13 @@ class Environment {
 
     static getByContext(key: keyof EnvironmentVariables, c: Context,): string | undefined {
         return env(c)[key]
+    }
+
+    static requireByContext(key: keyof EnvironmentVariables, c: Context): string {
+        const value = env(c)[key]
+        if (value === undefined) {
+            throw new Error(`Environment variable "${key}" is not set`)
+        }
+        return value
     }
 }
