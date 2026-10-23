@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { LoggerMiddleware } from "./logger.middleware";
+import { AuthorizationMiddleware } from "./authorization.midleware";
 
 export class Middleware {
     constructor(app: Hono) {
@@ -8,9 +9,17 @@ export class Middleware {
 
 
     init(app: Hono) {
-        const [logger] = [
-            new LoggerMiddleware()
-        ];
+        const [logger,
+            authorization,
+        ] = [
+                new LoggerMiddleware(),
+                new AuthorizationMiddleware(),
+            ];
         app.use("*", logger.use);
+
+        app.on("*",
+            AuthorizationMiddleware.prefix,
+            authorization.use
+        );
     }
 }
