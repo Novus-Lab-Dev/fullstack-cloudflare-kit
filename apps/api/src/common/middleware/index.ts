@@ -18,9 +18,13 @@ export class MiddlewareRegistry {
             ];
         app.use("*", loggerMiddleware.use);
 
-        app.on("*",
-            AuthorizationMiddleware.protectedPaths,
+        app.use(
+            AuthorizationMiddleware.protectedPath,
             authorizationMiddleware.use
         );
+        // app.on("*",
+        //     AuthorizationMiddleware.protectedPaths,
+        //     authorizationMiddleware.use
+        // );
     }
 }

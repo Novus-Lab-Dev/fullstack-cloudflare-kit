@@ -3,7 +3,7 @@ import { Middleware } from "./middleware.interface";
 
 
 export class AuthorizationMiddleware extends Middleware {
-    static protectedPaths = ["/api/*", "/protected/*"];
+    static protectedPath = "api/*";
 
     use = async (c: Context, next: Next) => {
         console.log("AuthorizationMiddleware");

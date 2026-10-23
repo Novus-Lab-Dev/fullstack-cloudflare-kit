@@ -17,6 +17,7 @@ export class AppModule {
 
     routes() {
         this.app.get('/', (c) => c.text('Hello World!'));
+        this.app.get('/api', (c) => c.text('Hello API!'));
     }
 
     notFound() { }
