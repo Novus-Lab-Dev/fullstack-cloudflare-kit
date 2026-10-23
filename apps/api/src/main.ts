@@ -2,9 +2,10 @@ import { Hono } from 'hono'
 import { AppModule } from './app.module'
 
 class AppBootstrap {
-  app: Hono = new Hono()
+  app: Hono;
 
   constructor() {
+    this.app = new Hono();
     this.init()
   }
 
