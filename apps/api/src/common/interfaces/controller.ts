@@ -1,55 +1,98 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
+import type { z } from "zod";
 import type { AppEnv } from "./app-env.interface";
+import { validateBody, validateQuery } from "../helpers/validation.helper";
+import type { ValidateResult } from "../helpers/validation.helper";
+import { registerRoutesForDocs } from "../openapi/openapi.service";
 
-// --- Route storage ---
+// --- Route options with zod schemas ---
+
+export type RouteOptions = {
+    body?: z.ZodType<any>;
+    query?: z.ZodType<any>;
+    summary?: string;
+    tags?: string[];
+};
 
 type Route = {
     method: "get" | "post" | "put" | "patch" | "delete";
     path: string;
-    handler: (c: Context<AppEnv>) => any;
+    handler: (c: Context<AppEnv>, body?: any, query?: any) => any;
+    options?: RouteOptions;
 };
 
-// Helper: get or create the routes array on the controller class
 function addToRoutes(target: object, route: Route) {
     const cls = target.constructor as { routes?: Route[] };
     (cls.routes ??= []).push(route);
 }
 
-// --- Decorators ---
+// --- Route decorators ---
 
-export function Get(path: string) {
+function defineRoute(method: Route["method"], path: string, options?: RouteOptions) {
     return (target: object, _key: string, desc: PropertyDescriptor) => {
-        addToRoutes(target, { method: "get", path, handler: desc.value });
+        addToRoutes(target, { method, path, handler: desc.value, options });
     };
 }
 
-export function Post(path: string) {
-    return (target: object, _key: string, desc: PropertyDescriptor) => {
-        addToRoutes(target, { method: "post", path, handler: desc.value });
-    };
+export function Get(path: string, options?: RouteOptions) {
+    return defineRoute("get", path, options);
 }
 
-export function Put(path: string) {
-    return (target: object, _key: string, desc: PropertyDescriptor) => {
-        addToRoutes(target, { method: "put", path, handler: desc.value });
-    };
+export function Post(path: string, options?: RouteOptions) {
+    return defineRoute("post", path, options);
 }
 
-export function Delete(path: string) {
-    return (target: object, _key: string, desc: PropertyDescriptor) => {
-        addToRoutes(target, { method: "delete", path, handler: desc.value });
-    };
+export function Put(path: string, options?: RouteOptions) {
+    return defineRoute("put", path, options);
 }
 
-// --- Base Controller ---
+export function Patch(path: string, options?: RouteOptions) {
+    return defineRoute("patch", path, options);
+}
+
+export function Delete(path: string, options?: RouteOptions) {
+    return defineRoute("delete", path, options);
+}
+
+// --- Base Controller (auto-validates via zod) ---
 
 export class IController {
     constructor(protected readonly app: Hono<AppEnv>, private readonly prefix: string) {
         const routes: Route[] = (this.constructor as { routes?: Route[] }).routes ?? [];
-        for (const { method, path, handler } of routes) {
+
+        registerRoutesForDocs(
+            routes.map(({ method, path, options }) => ({
+                method,
+                path: `${this.prefix}${path}`.replace(/\/+$/, "") || "/",
+                options,
+            }))
+        );
+
+        for (const { method, path, handler, options } of routes) {
             const fullPath = `${this.prefix}${path}`.replace(/\/+$/, "") || "/";
-            this.app[method](fullPath, handler.bind(this));
+            const bound = handler.bind(this);
+
+            const wrapped = async (c: Context<AppEnv>) => {
+                let body: any;
+                let query: any;
+
+                if (options?.body) {
+                    const result: ValidateResult<any> = await validateBody(c, options.body);
+                    if (!result.valid) return result.response;
+                    body = result.data;
+                }
+
+                if (options?.query) {
+                    const result: ValidateResult<any> = validateQuery(c, options.query);
+                    if (!result.valid) return result.response;
+                    query = result.data;
+                }
+
+                return bound(c, body, query);
+            };
+
+            this.app[method](fullPath, wrapped);
         }
     }
 }
