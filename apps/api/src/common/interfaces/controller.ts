@@ -2,36 +2,54 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import type { AppEnv } from "./app-env.interface";
 
-type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
+// --- Route storage ---
 
-type RouteHandler = (c: Context<AppEnv>) => any;
-
-interface RouteDefinition {
-    method: HttpMethod;
+type Route = {
+    method: "get" | "post" | "put" | "patch" | "delete";
     path: string;
-    handler: RouteHandler;
+    handler: (c: Context<AppEnv>) => any;
+};
+
+// Helper: get or create the routes array on the controller class
+function addToRoutes(target: object, route: Route) {
+    const cls = target.constructor as { routes?: Route[] };
+    (cls.routes ??= []).push(route);
 }
 
-const ROUTES_KEY = Symbol("routes");
+// --- Decorators ---
 
-function defineRoute(method: HttpMethod, path: string): MethodDecorator {
-    return (target, _propertyKey, descriptor) => {
-        const routes: RouteDefinition[] = ((target as any).constructor[ROUTES_KEY] ??= []);
-        routes.push({ method, path, handler: descriptor.value as RouteHandler });
+export function Get(path: string) {
+    return (target: object, _key: string, desc: PropertyDescriptor) => {
+        addToRoutes(target, { method: "get", path, handler: desc.value });
     };
 }
 
-export const Get = (path: string) => defineRoute("get", path);
-export const Post = (path: string) => defineRoute("post", path);
-export const Put = (path: string) => defineRoute("put", path);
-export const Patch = (path: string) => defineRoute("patch", path);
-export const Delete = (path: string) => defineRoute("delete", path);
+export function Post(path: string) {
+    return (target: object, _key: string, desc: PropertyDescriptor) => {
+        addToRoutes(target, { method: "post", path, handler: desc.value });
+    };
+}
+
+export function Put(path: string) {
+    return (target: object, _key: string, desc: PropertyDescriptor) => {
+        addToRoutes(target, { method: "put", path, handler: desc.value });
+    };
+}
+
+export function Delete(path: string) {
+    return (target: object, _key: string, desc: PropertyDescriptor) => {
+        addToRoutes(target, { method: "delete", path, handler: desc.value });
+    };
+}
+
+// --- Base Controller ---
 
 export class IController {
     constructor(protected readonly app: Hono<AppEnv>, private readonly prefix: string) {
-        const routes: RouteDefinition[] = (new.target as any)[ROUTES_KEY] ?? [];
+        const routes: Route[] = (this.constructor as { routes?: Route[] }).routes ?? [];
         for (const { method, path, handler } of routes) {
-            this.app[method](`${this.prefix}${path}`, handler.bind(this) as any);
+            const fullPath = `${this.prefix}${path}`.replace(/\/+$/, "") || "/";
+            this.app[method](fullPath, handler.bind(this));
         }
     }
 }

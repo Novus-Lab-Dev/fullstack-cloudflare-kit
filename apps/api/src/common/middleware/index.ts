@@ -18,6 +18,6 @@ export class MiddlewareRegistry {
             ];
 
         app.use("*", loggerMiddleware.use); // logger
-        app.use(AuthorizationMiddleware.protectedPath, authorizationMiddleware.use); //authorization
+        // app.use(AuthorizationMiddleware.protectedPath, authorizationMiddleware.use); //authorization
     }
 }
