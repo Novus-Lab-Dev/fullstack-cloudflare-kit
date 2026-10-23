@@ -1,25 +1,26 @@
 import { Hono } from "hono";
 import { LoggerMiddleware } from "./logger.middleware";
-import { AuthorizationMiddleware } from "./authorization.midleware";
+import { AuthorizationMiddleware } from "./authorization.middleware";
 
-export class Middleware {
+export class MiddlewareRegistry {
     constructor(app: Hono) {
-        this.init(app);
+        this.register(app);
     }
 
 
-    init(app: Hono) {
-        const [logger,
-            authorization,
+    register(app: Hono) {
+        const [
+            loggerMiddleware,
+            authorizationMiddleware,
         ] = [
                 new LoggerMiddleware(),
                 new AuthorizationMiddleware(),
             ];
-        app.use("*", logger.use);
+        app.use("*", loggerMiddleware.use);
 
         app.on("*",
-            AuthorizationMiddleware.prefix,
-            authorization.use
+            AuthorizationMiddleware.protectedPaths,
+            authorizationMiddleware.use
         );
     }
 }

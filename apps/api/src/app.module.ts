@@ -1,19 +1,18 @@
 import { Hono } from "hono";
-import { LoggerMiddleware } from "./common/middleware/logger.middleware";
-import { Middleware } from "./common/middleware";
+import { MiddlewareRegistry } from "./common/middleware";
 
 export class AppModule {
     app: Hono
     constructor(app: Hono) {
         this.app = app;
-        this.middleware();
+        this.useMiddlewares();
         this.routes();
         this.notFound();
         this.onError();
     }
 
-    middleware() {
-        new Middleware(this.app)
+    useMiddlewares() {
+        new MiddlewareRegistry(this.app)
     }
 
     routes() {
