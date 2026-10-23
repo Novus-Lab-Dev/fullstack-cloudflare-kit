@@ -1,7 +1,13 @@
 import { Hono } from "hono";
 import { MiddlewareRegistry } from "./common/middleware";
+import { UserModule } from "./api/user/user.module";
+
 
 export class AppModule {
+    modules = [
+        UserModule
+    ];
+
     app: Hono
     constructor(app: Hono) {
         this.app = app;
@@ -16,13 +22,12 @@ export class AppModule {
     }
 
     routes() {
-        this.app.get('/', (c) => c.text('Hello World!'));
-        this.app.get('/api', (c) => c.text('Hello API!'));
+        this.modules.forEach(module => {
+            new module(this.app);
+        });
     }
 
     notFound() { }
-
-
     onError() { }
 }
 
