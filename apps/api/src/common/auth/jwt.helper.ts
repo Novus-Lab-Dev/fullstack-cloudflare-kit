@@ -15,12 +15,12 @@ export class JwtHelper {
 
 
     async sign<T extends AppJWTPayload>(payload: T, c: Context) {
-        const secret = Environment.getByContext('JWT_SECRET', c);
+        const secret = Environment.getByContext('JWT_SECRET', c) || "";
         return sign(payload, secret, this.alg);
     }
 
     async verify(token: string, c: Context) {
-        const secret = Environment.getByContext('JWT_SECRET', c);
+        const secret = Environment.getByContext('JWT_SECRET', c) || "";
         return verify(token, secret, { alg: this.alg });
     }
 }
