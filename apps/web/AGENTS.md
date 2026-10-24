@@ -9,6 +9,8 @@ Guidance for AI agents (and humans) working in this web SPA package. Describe pa
 - **Routing:** TanStack Router v1 file-based (`routes/` directory). Route tree regenerated via `bun run generate-routes`.
 - **Data fetching:** TanStack Query v5 (`useQuery`, `queryClient.invalidateQueries`). Shared `queryClient` singleton in `lib/query.ts`.
 - **HTTP:** Axios via verb-facade (`api.get<T>`, `api.post<T>`, …) — see API layer below.
+- **Forms:** react-hook-form + zod via `@hookform/resolvers/zod`. Shared kit lives at `src/components/common/forms/` (`Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormDescription`, `FormMessage` + high-level inputs like `TextInput`, `SecureInput`, `SelectInput`, `TextareaInput`, `InputCheckbox`, `SwitchInput`, `RadioInput`, `OtpInput`, `SlugInput`).
+- **Table:** `src/components/common/table/` exports `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `TableCaption`, `TableEmpty`.
 - **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`. Class merging via `cn` utility.
 - **Components:** shadcn/ui primitives (`components/ui/`) + Spectrum UI registry (`components/spectrumui/`). Animation via Framer Motion / Motion.
 - **State:** No external state libs. Context providers (`providers/`) for cross-cutting concerns (auth, query client); component-local state for everything else.
@@ -162,6 +164,55 @@ Available verbs: `api.get<T>(path)`, `api.post<T>(path, body?)`, `api.put<T>`, `
 ### Errors
 
 All errors are normalized to `ApiError { status: number, message: string }` inside the internal `request<T>` helper. Never throw raw AxiosError to callers.
+
+## Forms (`src/components/common/forms/`)
+
+The shared kit is react-hook-form + zod + a set of high-level inputs. Always reach for these before writing raw `useForm` + `FormField` composition.
+
+### Layered API
+
+1. **Primitives** (`form.tsx`) — `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormDescription`, `FormMessage`, `useFormField`. Use these when you need a custom control.
+2. **Field inputs** — `TextInput`, `TextareaInput`, `SecureInput` (password + show/hide), `SelectInput`, `InputCheckbox`, `SwitchInput`, `RadioInput`, `OtpInput`, `SlugInput`. Each takes `name: FieldPath<T>` and pulls `control` from `useFormContext()` internally; the parent `<Form {...form}>` supplies the context.
+
+### Canonical shape
+
+```tsx
+const SignInSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+})
+type SignInValues = z.infer<typeof SignInSchema>
+
+function SignIn() {
+  const form = useForm<SignInValues>({
+    resolver: zodResolver(SignInSchema),
+    defaultValues: { token: '' },
+  })
+
+  function onSubmit(values: SignInValues) {
+    /* ... */
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <TextInput name="token" label="Token" required placeholder="eyJhbGciOi..." />
+        <Button type="submit" disabled={!form.formState.isValid}>Submit</Button>
+      </form>
+    </Form>
+  )
+}
+```
+
+### Rules
+
+- Never mix `useState` with `useForm` for the same field — RHF owns the value.
+- Only use `FormField` + `FormControl` directly when there's no matching field input; adding a new high-level input is preferred over repeating composition.
+- Zod schemas live next to the component that uses them; move to `src/schemas/{domain}.ts` on first cross-route reuse.
+- Use `form.formState.isValid` (with `mode: 'onChange'` for live validation) or `form.watch(name)` for reactive UI, not local mirror state.
+
+## Table (`src/components/common/table/`)
+
+Semantic HTML table wrappers: `<Table>` renders a scroll region (`role="region" tabIndex=0`) and provides consistent padding/border tokens via `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableHead>`, `<TableCell>`, `<TableCaption>`. Use `<TableEmpty colSpan={n}>` for zero-result states instead of hand-writing a placeholder row.
 
 ## TanStack Query usage (`src/lib/query.ts`)
 

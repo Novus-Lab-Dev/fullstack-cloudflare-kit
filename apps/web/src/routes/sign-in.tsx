@@ -1,9 +1,10 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
+import { Form, TextInput } from '@/components/common/forms'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/auth-provider'
 
 export const Route = createFileRoute('/sign-in')({
@@ -15,10 +16,22 @@ export const Route = createFileRoute('/sign-in')({
   component: SignIn,
 })
 
+const SignInSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+})
+
+type SignInValues = z.infer<typeof SignInSchema>
+
 function SignIn() {
   const { login } = useAuth()
-  const [token, setToken] = useState('')
-  const trimmed = token.trim()
+  const form = useForm<SignInValues>({
+    resolver: zodResolver(SignInSchema),
+    defaultValues: { token: '' },
+  })
+
+  function onSubmit(values: SignInValues) {
+    login(values.token.trim())
+  }
 
   return (
     <div className="mx-auto mt-24 flex w-full max-w-sm flex-col gap-6 p-8">
@@ -28,27 +41,15 @@ function SignIn() {
           Paste a JWT to start a session (placeholder until /auth/login is wired up).
         </p>
       </div>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (trimmed) login(trimmed)
-        }}
-      >
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="token">Token</Label>
-          <Input
-            id="token"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-            placeholder="eyJhbGciOi..."
-            autoFocus
-          />
-        </div>
-        <Button type="submit" disabled={!trimmed}>
-          Sign in
-        </Button>
-      </form>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <TextInput name="token" label="Token" placeholder="eyJhbGciOi..." required autoFocus />
+          <Button type="submit" disabled={!form.formState.isValid}>
+            Sign in
+          </Button>
+        </form>
+      </Form>
     </div>
   )
 }
