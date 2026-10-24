@@ -2,4 +2,6 @@ tasks:
   api:
     cwd: apps/api
     cmd: ["bun", "run", "dev"]
-    autostart: true
+  landing:
+    cwd: apps/landing
+    cmd: ["bun", "run", "dev"]
