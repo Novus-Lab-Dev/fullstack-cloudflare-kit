@@ -1,2 +1,9 @@
+/*
+ * Style entry. Tailwind does the work: utilities live in components, and this
+ * file only holds the engine import, design tokens and element defaults.
+ */
 @import "tailwindcss";
+@import "./tokens.css";
+@import "./base.css";
+
 @plugin '@tailwindcss/typography';

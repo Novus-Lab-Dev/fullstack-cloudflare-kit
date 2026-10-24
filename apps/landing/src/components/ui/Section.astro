@@ -1,0 +1,23 @@
+---
+import { classNames } from "../../common/helpers/class-names.helper";
+import Container from "./Container.astro";
+
+interface Props {
+    id?: string;
+    tone?: "default" | "muted";
+    class?: string;
+}
+
+const { id, tone = "default", class: className } = Astro.props;
+
+const tones: Record<NonNullable<Props["tone"]>, string> = {
+    default: "bg-white",
+    muted: "border-y border-slate-100 bg-slate-50",
+};
+---
+
+<section id={id} class={classNames("py-20 sm:py-28", tones[tone], className)}>
+    <Container>
+        <slot />
+    </Container>
+</section>

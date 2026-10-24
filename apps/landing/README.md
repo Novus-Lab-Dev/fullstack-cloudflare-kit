@@ -1,46 +1,44 @@
-# Astro Starter Kit: Basics
+# `apps/landing`
+
+Marketing site for the SMS API, built with Astro and Tailwind CSS v4.
+
+## Commands
 
 ```sh
-npm create astro@latest -- --template basics
+bun run dev       # dev server on http://localhost:3000
+bun run build     # static build to ./dist
+bun run preview   # preview the production build
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+From the repo root, `bun dev` starts this app alongside `apps/api` via dekit.
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
+## Structure
 
 ```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+src/
+├── pages/                  # routes (compose sections)
+├── layouts/Layout.astro    # document shell: meta, global.css, header + footer
+├── sections/{section}/     # one folder per section: {Section}.astro + {section}.content.ts
+├── components/
+│   ├── layout/             # Header, Footer
+│   └── ui/                 # Container, Section, Button
+├── common/
+│   ├── constants/          # site.config.ts (metadata, nav, CTAs)
+│   ├── helpers/            # classNames
+│   └── interfaces/         # content contracts
+├── styles/
+│   ├── global.css          # entry: tailwind + tokens + base
+│   ├── tokens.css          # @theme brand palette, font stack
+│   └── base.css            # element defaults
+└── assets/                 # images
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Styling
 
-## 🧞 Commands
+Tailwind utilities live directly in the `.astro` markup; shared primitives (`Container`, `Section`, `Button`) hold variant maps merged through `classNames()` and accept a `class` prop for one-off overrides.
 
-All commands are run from the root of the project, from a terminal:
+- Brand colors: `bg-brand-600`, `text-brand-700`, … (tokens in `src/styles/tokens.css`)
+- Neutrals: Tailwind's `slate-*` scale
+- `src/styles/global.css` is imported once by `Layout.astro` and stays an entry point — no per-section CSS files.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Copy lives in `sections/*/*.content.ts`; site metadata lives in `src/common/constants/site.config.ts`. See [AGENTS.md](./AGENTS.md) for the full conventions.

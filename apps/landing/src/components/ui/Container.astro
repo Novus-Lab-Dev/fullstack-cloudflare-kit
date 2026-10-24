@@ -1,0 +1,13 @@
+---
+import { classNames } from "../../common/helpers/class-names.helper";
+
+interface Props {
+    class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class={classNames("mx-auto w-full max-w-6xl px-6", className)}>
+    <slot />
+</div>

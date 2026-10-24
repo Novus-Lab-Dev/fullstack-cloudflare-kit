@@ -1,0 +1,35 @@
+---
+import { classNames } from "../../common/helpers/class-names.helper";
+
+interface Props {
+    href: string;
+    variant?: "primary" | "secondary" | "ghost";
+    size?: "md" | "lg";
+    class?: string;
+}
+
+const { href, variant = "primary", size = "md", class: className } = Astro.props;
+
+const variants: Record<NonNullable<Props["variant"]>, string> = {
+    primary: "bg-brand-600 text-white hover:bg-brand-700",
+    secondary: "border border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50",
+    ghost: "text-slate-600 hover:text-brand-700",
+};
+
+const sizes: Record<NonNullable<Props["size"]>, string> = {
+    md: "px-4 py-2.5 text-sm",
+    lg: "px-6 py-3 text-base",
+};
+---
+
+<a
+    href={href}
+    class={classNames(
+        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
+        variants[variant],
+        sizes[size],
+        className,
+    )}
+>
+    <slot />
+</a>

@@ -1,0 +1,58 @@
+---
+import { siteConfig } from "../../common/constants";
+import Container from "../ui/Container.astro";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-slate-100 bg-slate-50">
+    <Container class="flex flex-col gap-10 py-12 sm:flex-row sm:justify-between">
+        <div class="max-w-sm space-y-3">
+            <p class="font-semibold tracking-tight text-slate-900">{siteConfig.name}</p>
+            <p class="text-sm leading-6 text-slate-600">{siteConfig.description}</p>
+        </div>
+
+        <div class="flex gap-16">
+            <nav aria-label="Product" class="space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Product</p>
+                <ul class="space-y-2">
+                    {
+                        siteConfig.nav.map((item) => (
+                            <li>
+                                <a href={item.href} class="text-sm text-slate-600 hover:text-slate-900">
+                                    {item.label}
+                                </a>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </nav>
+
+            <nav aria-label="Links" class="space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Links</p>
+                <ul class="space-y-2">
+                    {
+                        siteConfig.socials.map((item) => (
+                            <li>
+                                <a
+                                    href={item.href}
+                                    class="text-sm text-slate-600 hover:text-slate-900"
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                >
+                                    {item.label}
+                                </a>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </nav>
+        </div>
+    </Container>
+
+    <div class="border-t border-slate-200">
+        <Container class="py-6">
+            <p class="text-xs text-slate-500">&copy; {year} {siteConfig.name}. All rights reserved.</p>
+        </Container>
+    </div>
+</footer>

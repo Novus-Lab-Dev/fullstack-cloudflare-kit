@@ -1,0 +1,23 @@
+---
+import Section from "../../components/ui/Section.astro";
+import { featuresContent } from "./features.content";
+---
+
+<Section id="features">
+    <div class="max-w-2xl space-y-4">
+        <p class="text-sm font-semibold uppercase tracking-wider text-brand-600">{featuresContent.eyebrow}</p>
+        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{featuresContent.title}</h2>
+        <p class="text-lg leading-8 text-slate-600">{featuresContent.description}</p>
+    </div>
+
+    <ul class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+            featuresContent.items.map((item) => (
+                <li class="rounded-2xl border border-slate-200 bg-white p-6 transition-colors hover:border-brand-200">
+                    <h3 class="text-base font-semibold text-slate-900">{item.title}</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                </li>
+            ))
+        }
+    </ul>
+</Section>

@@ -1,0 +1,28 @@
+---
+import Section from "../../components/ui/Section.astro";
+import { faqContent } from "./faq.content";
+---
+
+<Section id="faq">
+    <div class="max-w-2xl space-y-4">
+        <p class="text-sm font-semibold uppercase tracking-wider text-brand-600">{faqContent.eyebrow}</p>
+        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{faqContent.title}</h2>
+        <p class="text-lg leading-8 text-slate-600">{faqContent.description}</p>
+    </div>
+
+    <div class="mt-12 max-w-3xl divide-y divide-slate-200 border-y border-slate-200">
+        {
+            faqContent.items.map((item) => (
+                <details class="group py-5">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-medium text-slate-900">
+                        {item.question}
+                        <span class="text-slate-400 transition-transform group-open:rotate-45" aria-hidden="true">
+                            +
+                        </span>
+                    </summary>
+                    <p class="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
+                </details>
+            ))
+        }
+    </div>
+</Section>

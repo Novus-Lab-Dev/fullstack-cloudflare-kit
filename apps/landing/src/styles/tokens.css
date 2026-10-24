@@ -1,0 +1,18 @@
+/*
+ * Design tokens. `static` keeps every variable in the output so plain CSS
+ * (`var(--color-brand-600)`) works as well as utilities (`bg-brand-600`).
+ */
+@theme static {
+    --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    --color-brand-50: #eef3ff;
+    --color-brand-100: #dbe5ff;
+    --color-brand-200: #bfd0ff;
+    --color-brand-300: #93b0ff;
+    --color-brand-400: #5f85fb;
+    --color-brand-500: #3a5ef5;
+    --color-brand-600: #243fe6;
+    --color-brand-700: #1c30c9;
+    --color-brand-800: #1c2ba2;
+    --color-brand-900: #1c2a80;
+}
