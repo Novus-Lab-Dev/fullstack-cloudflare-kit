@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "spectrum-ui": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@spectrumui/mcp"
+            ]
+        }
+    }
+}
