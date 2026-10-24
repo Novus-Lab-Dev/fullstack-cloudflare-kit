@@ -19,7 +19,11 @@ export class UserController extends IController {
     @Post("/", {
         body: CreateUserSchema,
         summary: "Create a User",
-        tags: ["Users"]
+        tags: ["Users"],
+        permission: {
+            role: "admin",// "user",
+            required: ["user.manage"]
+        }
     })
     async create(c: HandlerContext, payload: CreateUserDto) {
         const user = await this.userService.create(payload);
@@ -35,7 +39,14 @@ export class UserController extends IController {
         return ResponseHelper.success(users);
     }
 
-    @Get("/:id", { summary: "Get user By id", tags: ["Users"] })
+    @Get("/:id", {
+        summary: "Get user By id",
+        tags: ["Users"],
+        permission: {
+            role: "user",
+            required: ["user.read"]
+        }
+    })
     async getById(c: HandlerContext) {
         if (!c.req.param("id")) {
             return ResponseHelper.error("Invalid id", { status: 400 });

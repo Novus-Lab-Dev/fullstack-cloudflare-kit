@@ -3,15 +3,25 @@ import type { Context } from "hono";
 import type { z } from "zod";
 import type { AppEnv } from "./app-env.interface";
 import { validateBody, validateQuery } from "../helpers/validation.helper";
+import { ResponseHelper } from "../helpers/response.helper";
+import type { User } from "./user.interface";
 import { registerRoutesForDocs } from "../openapi/openapi.service";
 
 // --- Route options with zod schemas ---
+
+export type RoutePermission = {
+    /** Role required to access the route (must match the JWT `role` claim). */
+    role?: string;
+    /** Permissions the user must hold. `"*"` in the user's permissions grants everything. */
+    required?: string[];
+};
 
 export type RouteSchema = {
     body?: z.ZodType<any>;
     query?: z.ZodType<any>;
     summary?: string;
     tags?: string[];
+    permission?: RoutePermission;
 };
 export type RouteOptions = RouteSchema;
 export type HandlerContext = Context<AppEnv>;
@@ -35,6 +45,15 @@ type Route<S extends RouteSchema = RouteSchema> = {
 };
 
 type AnyRoute = Route<any>;
+
+function checkPermission(permission: RoutePermission, user: User | undefined): string | null {
+    if (!user) return "Missing authorization";
+    if (permission.role && user.role !== permission.role) return `Requires role "${permission.role}"`;
+
+    const granted = user.permissions ?? [];
+    const missing = (permission.required ?? []).filter(p => !granted.includes("*") && !granted.includes(p));
+    return missing.length ? `Missing permissions: ${missing.join(", ")}` : null;
+}
 
 function addToRoutes(target: object, route: AnyRoute) {
     const cls = target.constructor as { routes?: AnyRoute[] };
@@ -90,6 +109,13 @@ export class IController {
             const bound = handler.bind(this);
 
             const wrapped = async (c: Context<AppEnv>) => {
+                if (options?.permission) {
+                    const denial = checkPermission(options.permission, c.get("user"));
+                    if (denial) {
+                        return ResponseHelper.error(denial, { status: 403, code: "FORBIDDEN" });
+                    }
+                }
+
                 let body: unknown;
                 let query: unknown;
 

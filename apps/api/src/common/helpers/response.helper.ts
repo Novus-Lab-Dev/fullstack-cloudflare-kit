@@ -1,4 +1,4 @@
-type Code = "AUTH_FAILED" | "NOT_FOUND" | "BAD_REQUEST" | "SERVER_ERROR";
+type Code = "AUTH_FAILED" | "FORBIDDEN" | "NOT_FOUND" | "BAD_REQUEST" | "SERVER_ERROR";
 
 type ResponseBody = {
     success: boolean;
