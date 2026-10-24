@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo } from 'react'
 import type { ReactNode } from 'react'
 
 import { queryClient } from '@/lib/query'
+import { router } from '@/router'
 import type { AuthUser } from '@/interfaces/auth'
 
 import { useBootstrap } from './use-bootstrap'
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     dropToken()
     queryClient.clear()
+    router.navigate({ to: '/sign-in' })
   }, [dropToken])
 
   const value = useMemo<AuthContextValue>(
