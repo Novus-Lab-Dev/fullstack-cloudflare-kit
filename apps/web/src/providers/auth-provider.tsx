@@ -1,8 +1,6 @@
-import { useNavigate, useRouterState } from '@tanstack/react-router'
-import { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import type { ReactNode } from 'react'
 
-import { FullPageSpinner } from '@/components/full-page-spinner'
 import { queryClient } from '@/lib/query'
 import type { AuthUser } from '@/interfaces/auth'
 
@@ -10,7 +8,7 @@ import { useBootstrap } from './use-bootstrap'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: AuthUser | null
   token: string | null
   status: AuthStatus
@@ -24,13 +22,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const PROTECTED_PREFIX = '/dashboard'
-const SIGN_IN_PATH = '/sign-in'
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { token, data, isPending, saveToken, dropToken } = useBootstrap()
-  const navigate = useNavigate()
-  const pathname = useRouterState({ select: (state) => state.location.pathname })
 
   const user = data ?? null
   const status: AuthStatus = !token
@@ -40,20 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       : user
         ? 'authenticated'
         : 'unauthenticated'
-
-  const isProtectedRoute =
-    pathname === PROTECTED_PREFIX || pathname.startsWith(`${PROTECTED_PREFIX}/`)
-  const isSignInRoute = pathname === SIGN_IN_PATH
-
-  // Centralized auth redirect: guard runs whenever status or route changes.
-  useEffect(() => {
-    if (status === 'unauthenticated' && isProtectedRoute) {
-      navigate({ to: SIGN_IN_PATH })
-    }
-    if (status === 'authenticated' && isSignInRoute) {
-      navigate({ to: PROTECTED_PREFIX })
-    }
-  }, [status, isProtectedRoute, isSignInRoute, navigate])
 
   const login = useCallback(
     (nextToken: string) => {
@@ -85,16 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [user, token, status, login, logout],
   )
-
-  if (status === 'loading') {
-    return <FullPageSpinner />
-  }
-  if (status === 'unauthenticated' && isProtectedRoute) {
-    return <FullPageSpinner label="Redirecting to sign in..." />
-  }
-  if (status === 'authenticated' && isSignInRoute) {
-    return <FullPageSpinner label="Redirecting to dashboard..." />
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

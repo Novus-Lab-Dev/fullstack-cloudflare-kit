@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,11 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/auth-provider'
 
 export const Route = createFileRoute('/sign-in')({
+  beforeLoad: ({ context }) => {
+    if (context.auth.isAuthenticated) {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
   component: SignIn,
 })
 
