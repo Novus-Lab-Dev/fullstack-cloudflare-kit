@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Landing page",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "bun run dev",
+      "cwd": "${workspaceFolder}/apps/landing"
+    },
+    {
+      "name": "API (local)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "bun run dev:local",
+      "cwd": "${workspaceFolder}/apps/api"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Landing page + API",
+      "configurations": [
+        "Landing page",
+        "API (local)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "command": "bun run dev:local",
+      "cwd": "${workspaceFolder}",
+      "name": "API (local)",
+      "request": "launch",
+      "type": "node-terminal"
+    }
+  ]
+}

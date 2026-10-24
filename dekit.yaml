@@ -5,3 +5,6 @@ tasks:
   landing:
     cwd: apps/landing
     cmd: ["bun", "run", "dev"]
+  web:
+    cwd: apps/web
+    cmd: ["bun", "run", "dev"]
