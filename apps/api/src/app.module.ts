@@ -5,6 +5,7 @@ import { MiddlewareRegistry } from "./common/middleware";
 import { setupOpenApi } from "./common/openapi/openapi.service";
 import { ResponseHelper } from "./common/helpers/response.helper";
 import { UserModule } from "./api/user/user.module";
+import { ScheduleProcessor } from "./common/schedule/schedule.processor";
 
 
 export class AppModule {
@@ -13,6 +14,8 @@ export class AppModule {
     ];
 
     app: Hono<AppEnv>
+    scheduleProcessor = new ScheduleProcessor();
+
     constructor(app: Hono<AppEnv>) {
         this.app = app;
         this.useMiddlewares();
@@ -54,6 +57,10 @@ export class AppModule {
                 code: "SERVER_ERROR",
             });
         });
+    }
+
+    scheduled(event: ScheduledEvent, env: AppEnv["Bindings"], ctx: ExecutionContext) {
+        this.scheduleProcessor.process(event, env, ctx);
     }
 }
 

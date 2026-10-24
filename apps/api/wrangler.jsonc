@@ -8,7 +8,9 @@
   ],
   "rules": [
     {
-      "globs": ["**/*.mjml"],
+      "globs": [
+        "**/*.mjml"
+      ],
       "fallthrough": false,
       "type": "Text"
     }
@@ -24,6 +26,13 @@
     "EMAIL_FROM": "notify@example.com",
     "EMAIL_FROM_NAME": "SMS App",
     "MAILCHANNELS_ENDPOINT": "https://api.mailchannels.net/tx/v1/send"
+  },
+  "triggers": {
+    "crons": [
+      "*/15 * * * *", // Schedule 1: Every 15 minutes
+      "0 0 * * *", // Schedule 2: Every midnight
+      "0 12 * * 1" // Schedule 3: Every Monday at noon
+    ]
   }
   // "compatibility_flags": [
   //   "nodejs_compat"
