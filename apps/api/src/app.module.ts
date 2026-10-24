@@ -6,6 +6,7 @@ import { setupOpenApi } from "./common/openapi/openapi.service";
 import { ResponseHelper } from "./common/helpers/response.helper";
 import { UserModule } from "./api/user/user.module";
 import { ScheduleProcessor } from "./common/schedule/schedule.processor";
+import { QueueProcessor, type QueueJob } from "./common/queue/queue.processor";
 
 
 export class AppModule {
@@ -15,6 +16,7 @@ export class AppModule {
 
     app: Hono<AppEnv>
     scheduleProcessor = new ScheduleProcessor();
+    queueProcessor = new QueueProcessor();
 
     constructor(app: Hono<AppEnv>) {
         this.app = app;
@@ -61,6 +63,10 @@ export class AppModule {
 
     scheduled(event: ScheduledEvent, env: AppEnv["Bindings"], ctx: ExecutionContext) {
         this.scheduleProcessor.process(event, env, ctx);
+    }
+
+    queue(batch: MessageBatch<QueueJob>, env: AppEnv["Bindings"], ctx: ExecutionContext) {
+        this.queueProcessor.process(batch, env, ctx);
     }
 }
 

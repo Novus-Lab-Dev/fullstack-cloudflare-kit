@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { AppEnv } from './common/interfaces/app-env.interface'
+import type { QueueJob } from './common/queue/queue.processor'
 import { AppModule } from './app.module'
 
 class AppBootstrap {
@@ -23,6 +24,9 @@ export default {
   fetch: bootstrap.app.fetch,
   scheduled(event: ScheduledEvent, env: AppEnv['Bindings'], ctx: ExecutionContext) {
     bootstrap.appModule.scheduled(event, env, ctx)
+  },
+  queue(batch: MessageBatch<QueueJob>, env: AppEnv['Bindings'], ctx: ExecutionContext) {
+    bootstrap.appModule.queue(batch, env, ctx)
   },
 }
 

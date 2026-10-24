@@ -22,6 +22,22 @@
       "database_id": "fb496481-7667-4820-a3db-ed5e56559097"
     }
   ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "JOB_QUEUE",
+        "queue": "job-queue"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "job-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30,
+        "max_retries": 3
+      }
+    ]
+  },
   "vars": {
     "EMAIL_FROM": "notify@example.com",
     "EMAIL_FROM_NAME": "SMS App",
