@@ -4,6 +4,9 @@ import { env } from 'hono/adapter'
 interface EnvironmentVariables {
     DATABASE_URL: string
     JWT_SECRET: string
+    EMAIL_FROM: string
+    EMAIL_FROM_NAME: string
+    MAILCHANNELS_ENDPOINT: string
 }
 
 

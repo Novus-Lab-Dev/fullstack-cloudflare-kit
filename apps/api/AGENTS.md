@@ -101,6 +101,9 @@ The `EnvironmentVariables` interface types every secret/var read through Hono's 
 interface EnvironmentVariables {
     DATABASE_URL: string
     JWT_SECRET: string
+    EMAIL_FROM: string
+    EMAIL_FROM_NAME: string
+    MAILCHANNELS_ENDPOINT: string
 }
 ```
 
