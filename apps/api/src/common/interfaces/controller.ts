@@ -94,12 +94,15 @@ export class IController {
     static basePath?: string;
 
     constructor(protected readonly app: Hono<AppEnv>, private readonly prefix: string = "") {
+        const basePath = (this.constructor as typeof IController).basePath ?? "";
         const routes: AnyRoute[] = (this.constructor as { routes?: AnyRoute[] }).routes ?? [];
 
+        // Docs must show the effective URL: IModule mounts this sub-app with
+        // Hono.basePath(basePath), so prefix it here for the OpenAPI spec only.
         registerRoutesForDocs(
             routes.map(({ method, path, options }) => ({
                 method,
-                path: `${this.prefix}${path}`.replace(/\/+$/, "") || "/",
+                path: `${basePath}${this.prefix}${path}`.replace(/\/+$/, "") || "/",
                 options,
             }))
         );

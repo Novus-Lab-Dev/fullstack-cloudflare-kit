@@ -22,7 +22,7 @@ export class AppModule {
         this.app = app;
         this.useMiddlewares();
         this.routes();
-        // this.setupDocs();
+        this.setupDocs();
         this.notFound();
         this.onError();
     }

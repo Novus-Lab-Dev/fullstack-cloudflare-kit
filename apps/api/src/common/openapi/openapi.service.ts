@@ -76,9 +76,34 @@ export function buildOpenApiDoc(info = { title: "SMS API", version: "1.0.0" }): 
     };
 }
 
-export function setupOpenApi(app: Hono<AppEnv>, prefix = "/doc") {
+const SWAGGER_UI_CSS = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css";
+const SWAGGER_UI_JS = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js";
+
+// Minimal Swagger UI page (CDN assets) pointed at the JSON spec served below.
+function swaggerHtml(specUrl: string): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SMS API Docs</title>
+    <link rel="stylesheet" href="${SWAGGER_UI_CSS}">
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="${SWAGGER_UI_JS}"></script>
+    <script>
+        SwaggerUIBundle({ url: "${specUrl}", dom_id: "#swagger-ui", deepLinking: true });
+    </script>
+</body>
+</html>`;
+}
+
+export function setupOpenApi(app: Hono<AppEnv>, prefix = "/docs") {
     app.get(`${prefix}.json`, (c) => {
         const doc = buildOpenApiDoc();
         return c.json(doc);
     });
+
+    app.get(prefix, (c) => c.html(swaggerHtml(`${prefix}.json`)));
 }

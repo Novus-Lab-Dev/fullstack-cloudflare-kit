@@ -8,7 +8,7 @@ Guidance for AI agents (and humans) working in this API package.
 - **HTTP framework:** Hono + custom TypeScript decorators (`experimentalDecorators`), route metadata registered at class-definition time.
 - **Validation:** Zod v4. DTOs are Zod schemas + `z.infer` types; validation runs automatically in the controller wrapper (`validateBody` / `validateQuery`).
 - **ORM:** Drizzle ORM + Cloudflare D1 (SQLite). Migrations via `drizzle-kit generate` + `wrangler d1 migrations apply`.
-- **Docs:** OpenAPI routes are auto-registered from decorator options (`registerRoutesForDocs`); serve at `/docs` via `setupOpenApi` (currently disabled in `AppModule`).
+- **Docs:** OpenAPI routes are auto-registered from decorator options (`registerRoutesForDocs`); served at `/docs.json` via `setupOpenApi` (wired up in `AppModule.setupDocs()`).
 
 ## Commands
 
@@ -101,7 +101,7 @@ Docs are generated automatically from decorator options — never hand-write Ope
 
 - `registerRoutesForDocs` is called by `IController` with each route's `{ method, path, options }`; `summary`, `tags`, `body`, `query` feed the doc.
 - `schema.generator.ts` converts Zod schemas to JSON Schema into `components.schemas`.
-- Enable the endpoint by calling `setupOpenApi(this.app, "/docs")` in `AppModule` (currently commented out); serves the doc at `/docs.json`.
+- Enable the endpoint by calling `setupOpenApi(this.app, "/docs")` in `AppModule.setupDocs()` (invoked from the constructor); serves the doc at `/docs.json` (no HTML UI is hosted).
 - Describe DTO fields with `.describe("...")` so they show up in the generated docs.
 
 ## User type (`src/common/interfaces/user.interface.ts`)
