@@ -1,4 +1,4 @@
-import type { FeaturesContent } from "../../common/interfaces/content.interface";
+import type { FeaturesContent } from "../../../common/interfaces/content.interface";
 
 export const featuresContent: FeaturesContent = {
     eyebrow: "Features",

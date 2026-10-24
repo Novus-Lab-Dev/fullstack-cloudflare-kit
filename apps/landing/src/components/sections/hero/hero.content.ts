@@ -1,4 +1,4 @@
-import type { HeroContent } from "../../common/interfaces/content.interface";
+import type { HeroContent } from "../../../common/interfaces/content.interface";
 
 export const heroContent: HeroContent = {
     eyebrow: "Transactional SMS API",

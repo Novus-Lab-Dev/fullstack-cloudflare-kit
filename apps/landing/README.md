@@ -18,10 +18,10 @@ From the repo root, `bun dev` starts this app alongside `apps/api` via dekit.
 src/
 ├── pages/                  # routes (compose sections)
 ├── layouts/Layout.astro    # document shell: meta, global.css, header + footer
-├── sections/{section}/     # one folder per section: {Section}.astro + {section}.content.ts
 ├── components/
 │   ├── layout/             # Header, Footer
-│   └── ui/                 # Container, Section, Button
+│   ├── ui/                 # Container, Section, Button
+│   └── sections/{section}/ # one folder per section: {Section}.astro + {section}.content.ts
 ├── common/
 │   ├── constants/          # site.config.ts (metadata, nav, CTAs)
 │   ├── helpers/            # classNames
@@ -41,4 +41,4 @@ Tailwind utilities live directly in the `.astro` markup; shared primitives (`Con
 - Neutrals: Tailwind's `slate-*` scale
 - `src/styles/global.css` is imported once by `Layout.astro` and stays an entry point — no per-section CSS files.
 
-Copy lives in `sections/*/*.content.ts`; site metadata lives in `src/common/constants/site.config.ts`. See [AGENTS.md](./AGENTS.md) for the full conventions.
+Copy lives in `components/sections/*/*.content.ts`; site metadata lives in `src/common/constants/site.config.ts`. See [AGENTS.md](./AGENTS.md) for the full conventions.

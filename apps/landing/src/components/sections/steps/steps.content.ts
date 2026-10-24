@@ -1,4 +1,4 @@
-import type { StepsContent } from "../../common/interfaces/content.interface";
+import type { StepsContent } from "../../../common/interfaces/content.interface";
 
 export const stepsContent: StepsContent = {
     eyebrow: "How it works",

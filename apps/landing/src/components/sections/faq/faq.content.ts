@@ -1,4 +1,4 @@
-import type { FaqContent } from "../../common/interfaces/content.interface";
+import type { FaqContent } from "../../../common/interfaces/content.interface";
 
 export const faqContent: FaqContent = {
     eyebrow: "FAQ",

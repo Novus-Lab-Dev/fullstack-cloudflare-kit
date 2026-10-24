@@ -1,7 +1,7 @@
 /**
  * Shared content contracts for landing page sections.
  *
- * Every `*.content.ts` file in `src/sections/{section}/` is typed with one of
+ * Every `*.content.ts` file in `src/components/sections/{section}/` is typed with one of
  * these interfaces, so section copy stays data-driven and refactorable.
  */
 

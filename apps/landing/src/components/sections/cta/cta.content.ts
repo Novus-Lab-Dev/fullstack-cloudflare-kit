@@ -1,4 +1,4 @@
-import type { CtaContent } from "../../common/interfaces/content.interface";
+import type { CtaContent } from "../../../common/interfaces/content.interface";
 
 export const ctaContent: CtaContent = {
     title: "Start sending in minutes",

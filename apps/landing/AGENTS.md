@@ -27,12 +27,12 @@ src/
 │   └── 404.astro
 ├── layouts/
 │   └── Layout.astro           # document shell: head/meta, global.css, Header + main + Footer
-├── sections/{section}/        # one folder per landing section (the analogue of api/{feature})
-│   ├── {Section}.astro        # markup + utility classes
-│   └── {section}.content.ts   # copy/data, typed via common/interfaces
 ├── components/
 │   ├── layout/                # page chrome: Header, Footer
-│   └── ui/                    # primitives: Container, Section, Button
+│   ├── ui/                    # primitives: Container, Section, Button
+│   └── sections/{section}/    # one folder per landing section (the analogue of api/{feature})
+│       ├── {Section}.astro    # markup + utility classes
+│       └── {section}.content.ts  # copy/data, typed via common/interfaces
 ├── common/                    # shared, page-state-free infrastructure
 │   ├── constants/             # site.config.ts (name, description, nav, CTAs) + index.ts re-exports
 │   ├── helpers/               # classNames (utility-string composition)
@@ -44,7 +44,7 @@ src/
 └── assets/                    # images imported by components
 ```
 
-Layering rule: `page → section → ui primitive`. A page only orders sections; a section owns its copy and markup; a primitive owns reusable layout and variants. Sections never render `<html>`, and primitives never import a section.
+Layering rule: `page → section → ui primitive`. A page only orders sections; a section (`components/sections/`) owns its copy and markup; a primitive (`components/ui/`) owns reusable layout and variants. Sections never render `<html>`, and primitives never import a section.
 
 ## Styling rules
 
@@ -56,12 +56,12 @@ Layering rule: `page → section → ui primitive`. A page only orders sections;
 - **Mobile-first.** Base utilities target small screens; add `sm:` (40rem) and `lg:` (64rem) for larger layouts.
 - `src/styles/global.css` stays an entry point (engine + tokens + base). It is imported once, by `Layout.astro`.
 
-## Section convention (`src/sections/{section}/`)
+## Section convention (`src/components/sections/{section}/`)
 
 Every section is a folder with a component and a sibling content module typed by an interface in `src/common/interfaces/content.interface.ts`:
 
 ```ts
-// sections/features/features.content.ts
+// components/sections/features/features.content.ts
 export const featuresContent: FeaturesContent = {
     eyebrow: "Features",
     title: "...",
@@ -88,7 +88,7 @@ import { featuresContent } from "./features.content";
 
 ### Registering a new section
 
-1. Create `src/sections/{section}/` with `{Section}.astro` + `{section}.content.ts`.
+1. Create `src/components/sections/{section}/` with `{Section}.astro` + `{section}.content.ts`.
 2. Add the content interface to `src/common/interfaces/content.interface.ts` if none fits.
 3. Import and place it in `src/pages/index.astro` (order = visual order).
 4. If it needs a nav entry, add it to `siteConfig.nav` and give the section root a matching `id`.
