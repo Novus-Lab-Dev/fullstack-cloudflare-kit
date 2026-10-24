@@ -8,7 +8,7 @@ export type NewUserRecord = NewUserRow;
 export class UserRepository extends BaseRepository<typeof usersTable> {
 
     constructor(db: D1Client) {
-        super(db, usersTable, usersTable.sub);
+        super(db, usersTable, usersTable.id);
     }
 
     async findByEmail(email: string): Promise<UserRecord | null> {
