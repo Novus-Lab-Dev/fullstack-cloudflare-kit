@@ -5,8 +5,14 @@ import { useForm } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 
-import { Form, InputCheckbox, SecureInput, TextInput } from '@/components/common/forms'
+import {
+  Form,
+  InputCheckbox,
+  SecureInput,
+  TextInput,
+} from '@/components/common/forms'
 import { Button } from '@/components/ui/button'
+import { createMockToken } from '@/lib/mock-auth'
 import { useAuth } from '@/providers/auth-provider'
 
 export const Route = createFileRoute('/sign-in')({
@@ -36,9 +42,8 @@ function SignIn() {
   })
 
   function onSubmit(values: SignInValues) {
-    // Placeholder session until /auth/login is wired up: any non-empty
-    // credentials open a session, "Remember me" controls token persistence.
-    login(`dev-session.${values.username}`)
+    // Mock session until /auth/login is wired up: any non-empty credentials open one.
+    login(createMockToken(values.username))
   }
 
   return (
@@ -81,23 +86,27 @@ function BrandPanel() {
           SEU UMS
         </h1>
         <p className="max-w-md leading-relaxed text-white/70">
-          UMS assists all the members of Southeast University to do a variety of academic and
-          co-curricular tasks with well-designed dashboards packed with gorgeous and in-depth
-          modules. Making this university paperless is our key objective. Enjoy your journey with
-          Southeast University.
+          UMS assists all the members of Southeast University to do a variety of
+          academic and co-curricular tasks with well-designed dashboards packed
+          with gorgeous and in-depth modules. Making this university paperless
+          is our key objective. Enjoy your journey with Southeast University.
         </p>
 
         <div className="flex items-center gap-4 pt-2">
           <div aria-hidden className="flex -space-x-2.5">
-            {(['#c9a227', '#5b6d8f', '#3f8f7a', '#a34f8f'] as const).map((color) => (
-              <span
-                key={color}
-                className="size-9 rounded-full border-2 border-brand"
-                style={{ backgroundColor: color }}
-              />
-            ))}
+            {(['#c9a227', '#5b6d8f', '#3f8f7a', '#a34f8f'] as const).map(
+              (color) => (
+                <span
+                  key={color}
+                  className="size-9 rounded-full border-2 border-brand"
+                  style={{ backgroundColor: color }}
+                />
+              ),
+            )}
           </div>
-          <p className="text-sm text-white/70">More than 15k students joined us, it’s your turn</p>
+          <p className="text-sm text-white/70">
+            More than 15k students joined us, it’s your turn
+          </p>
         </div>
       </div>
 
@@ -122,7 +131,10 @@ function SignInForm({ form, onSubmit }: SignInFormProps) {
         <h2 className="text-center text-3xl font-bold">Sign in</h2>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <TextInput
               name="username"
               label="Username/Student Code"
@@ -130,7 +142,12 @@ function SignInForm({ form, onSubmit }: SignInFormProps) {
               required
               autoFocus
             />
-            <SecureInput name="password" label="Password" placeholder="••••••••" required />
+            <SecureInput
+              name="password"
+              label="Password"
+              placeholder="••••••••"
+              required
+            />
 
             <div className="flex items-center justify-between">
               <InputCheckbox name="rememberMe" label="Remember me" />
@@ -142,13 +159,23 @@ function SignInForm({ form, onSubmit }: SignInFormProps) {
               </a>
             </div>
 
-            <Button type="submit" size="lg" className="mt-2 w-full" disabled={!form.formState.isValid}>
+            <Button
+              type="submit"
+              size="lg"
+              className="mt-2 w-full"
+              disabled={!form.formState.isValid}
+            >
               Sign in
             </Button>
           </form>
         </Form>
 
-        <Button type="button" variant="outline" size="lg" className="w-full gap-2 rounded-full">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full gap-2 rounded-full"
+        >
           <CircleHelp />
           Important Contact
         </Button>
@@ -172,9 +199,19 @@ function Logo() {
       className="size-20"
       role="img"
     >
-      <circle cx="48" cy="48" r="46" fill="#f5a623" stroke="#193b68" strokeWidth="3" />
+      <circle
+        cx="48"
+        cy="48"
+        r="46"
+        fill="#f5a623"
+        stroke="#193b68"
+        strokeWidth="3"
+      />
       <circle cx="48" cy="48" r="38" fill="#193b68" />
-      <path d="M48 26c6 7 9 12 9 18a9 9 0 1 1-18 0c0-6 3-11 9-18z" fill="#f5a623" />
+      <path
+        d="M48 26c6 7 9 12 9 18a9 9 0 1 1-18 0c0-6 3-11 9-18z"
+        fill="#f5a623"
+      />
       <rect x="36" y="56" width="24" height="14" rx="2" fill="#168568" />
     </svg>
   )

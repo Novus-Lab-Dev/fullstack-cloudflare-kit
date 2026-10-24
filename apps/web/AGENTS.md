@@ -40,10 +40,14 @@ src/
 ├── styles.css                    # Tailwind import + global layer styles
 ├── routes/                       # TanStack file-based routes
 │   ├── __root.tsx                # createRootRouteWithContext<{ auth: AuthContextValue }>
-│   ├── _authenticated.tsx        # pathless layout: beforeLoad guard (unauth → /sign-in)
+│   ├── _authenticated.tsx        # pathless layout: beforeLoad guard (unauth → /sign-in) + AppShell
 │   ├── _authenticated/
 │   │   ├── index.tsx             # / → redirect to /dashboard (for authenticated users)
-│   │   └── dashboard.tsx         # /dashboard
+│   │   ├── dashboard.tsx         # /dashboard
+│   │   ├── messages.tsx          # /messages
+│   │   ├── templates.tsx         # /templates
+│   │   ├── contacts.tsx          # /contacts
+│   │   └── settings.tsx          # /settings
 │   └── sign-in.tsx               # /sign-in (public; beforeLoad authed → /dashboard)
 ├── providers/                    # React context providers + custom hooks
 │   ├── auth-provider.tsx         # AuthContext + useAuth
@@ -51,11 +55,14 @@ src/
 │   └── query-provider.tsx        # QueryClientProvider + devtools gate
 ├── lib/                          # shared utilities and clients
 │   ├── api.ts                    # axios instance + verb facade + token helpers
+│   ├── mock-auth.ts              # dev-only mock session tokens (login is mocked)
 │   ├── query.ts                  # queryClient singleton
 │   └── utils.ts                  # cn()
 ├── interfaces/                   # shared types (no runtime code)
 │   └── auth.ts                   # AuthUser
 └── components/
+    ├── app-shell.tsx             # sidebar + top bar + <Outlet />; owns NAV_ITEMS
+    ├── section-placeholder.tsx   # scaffold for not-yet-built route sections
     ├── full-page-spinner.tsx     # shared loading indicator
     ├── ui/                       # shadcn primitives (button, input, card, …)
     └── spectrumui/               # Spectrum registry components (data-table, …)
@@ -78,9 +85,12 @@ The whole app is **locked** — only `/sign-in` is publicly reachable. Follow th
        throw redirect({ to: '/sign-in' })
      }
    }
-   component: () => <Outlet />
+   component: AppShell
    ```
-   Any route dropped under `_authenticated/` inherits the guard automatically.
+   Any route dropped under `_authenticated/` inherits the guard automatically. `AppShell`
+   (`src/components/app-shell.tsx`) renders the collapsible sidebar, top bar, mobile drawer and
+   the child `<Outlet />`; its `NAV_ITEMS` array is the single source of truth for sidebar links,
+   so add an entry there when you add a navigable route.
 
 4. **Sign-in guard** (`sign-in.tsx`):
    ```ts
@@ -116,9 +126,15 @@ Put it directly under `src/routes/` (outside `_authenticated/`), e.g. `src/route
 ### `use-bootstrap.ts`
 
 Owns the token state internally (`useState<string | null>` initialized from localStorage). Wraps a TanStack Query for `/auth/me`:
-- `enabled: Boolean(token)` — no fetch without a token.
+- `enabled: Boolean(token) && !mockUser` — no fetch without a real token (mock sessions resolve locally).
 - On error inside `queryFn`: calls `clearStoredToken()` + resets state (no parent callbacks).
 - Exposes `{ token, data, isPending, saveToken, dropToken }`.
+
+### Mock sessions (`src/lib/mock-auth.ts`)
+
+Login is mocked until the API exposes `/auth/login` and `/auth/me`. `sign-in.tsx` accepts any non-empty credentials and calls `login(createMockToken(username))`, which yields `dev-session.<username>`. `readMockUser()` parses that prefix into a local user (`role: 'admin'`, so every dashboard page is reachable), and `use-bootstrap.ts` skips the `/auth/me` request for it — otherwise the missing endpoint would invalidate the session and bounce the user back to `/sign-in`.
+
+When the real endpoints land, delete `mock-auth.ts`, call `api.post('/auth/login', …)` in the submit handler, and let every token go through the `/auth/me` bootstrap.
 
 ### `auth-provider.tsx`
 

@@ -1,13 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
-import { api, clearStoredToken, getStoredToken, setStoredToken } from '@/lib/api'
+import {
+  api,
+  clearStoredToken,
+  getStoredToken,
+  setStoredToken,
+} from '@/lib/api'
+import { readMockUser } from '@/lib/mock-auth'
 import type { AuthUser } from '@/interfaces/auth'
 
 const BOOTSTRAP_ENDPOINT = '/auth/me'
 
 export function useBootstrap() {
   const [token, setToken] = useState<string | null>(() => getStoredToken())
+
+  // Mock sessions resolve locally; only real tokens are verified against the API.
+  const mockUser = token ? readMockUser(token) : null
 
   const { data, isPending } = useQuery<AuthUser>({
     queryKey: ['auth', 'me', token],
@@ -21,7 +30,7 @@ export function useBootstrap() {
         throw new Error('auth bootstrap failed')
       }
     },
-    enabled: Boolean(token),
+    enabled: Boolean(token) && !mockUser,
     retry: false,
     staleTime: Infinity,
   })
@@ -36,5 +45,11 @@ export function useBootstrap() {
     setToken(null)
   }, [])
 
-  return { token, data, isPending, saveToken, dropToken }
+  return {
+    token,
+    data: mockUser ?? data,
+    isPending: mockUser ? false : isPending,
+    saveToken,
+    dropToken,
+  }
 }
