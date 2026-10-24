@@ -2,19 +2,30 @@ import mjml2html from "mjml-browser";
 import { env } from "cloudflare:workers";
 import baseTemplate from "./base.mjml";
 
+// Registered MJML templates, bundled as raw text. Add a `*.mjml` here and expose
+// it under a key to make it selectable via `send({ template })`.
+const templates = {
+    base: baseTemplate,
+} as const;
+
+export type EmailTemplate = keyof typeof templates;
+
 export type EmailInput = {
     to: string | string[];
     subject: string;
+    template?: EmailTemplate;
     variables?: Record<string, string | number>;
     text?: string;
     from?: string;
     replyTo?: string;
 };
 
-// Minimal email helper (mirrors the ResponseHelper static-method style).
-// Renders an MJML template at runtime and sends via MailChannels'
-// transactional HTTP API (free tier, no API key; authenticated by the Worker).
-export class EmailHelper {
+const DEFAULT_TEMPLATE: EmailTemplate = "base";
+
+// Shared email service (mirrors the ResponseHelper static-method style).
+// Renders an MJML template at runtime and sends via MailChannels' transactional
+// HTTP API (free tier, no API key; authenticated by the Worker).
+export class EmailService {
     private static escapeHtml(value: string): string {
         return value
             .replace(/&/g, "&amp;")
@@ -28,17 +39,18 @@ export class EmailHelper {
     private static fillTemplate(html: string, variables: EmailInput["variables"] = {}): string {
         return html
             .replace(/\{\{\{\s*([\w.]+)\s*\}\}\}/g, (_, key: string) => String(variables[key] ?? ""))
-            .replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key: string) => EmailHelper.escapeHtml(String(variables[key] ?? "")));
+            .replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key: string) => EmailService.escapeHtml(String(variables[key] ?? "")));
     }
 
     // Compile MJML -> HTML at runtime (mjml-browser runs on the Workers runtime).
-    static async render(variables?: EmailInput["variables"]): Promise<string> {
-        const { html } = await mjml2html(baseTemplate, { validationLevel: "skip" });
-        return EmailHelper.fillTemplate(html, variables);
+    static async render(variables?: EmailInput["variables"], template: EmailTemplate = DEFAULT_TEMPLATE): Promise<string> {
+        const source = templates[template] ?? templates[DEFAULT_TEMPLATE];
+        const { html } = await mjml2html(source, { validationLevel: "skip" });
+        return EmailService.fillTemplate(html, variables);
     }
 
     static async send(input: EmailInput): Promise<void> {
-        const html = await EmailHelper.render(input.variables);
+        const html = await EmailService.render(input.variables, input.template);
         const recipients = Array.isArray(input.to) ? input.to : [input.to];
 
         const response = await fetch(env.MAILCHANNELS_ENDPOINT, {

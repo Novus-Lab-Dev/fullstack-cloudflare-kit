@@ -1,4 +1,4 @@
-// Ambient module types for the email sender.
+// Ambient module types for the email service.
 
 // `.mjml` files are imported as raw text (see the `**/*.mjml` -> Text rule in
 // wrangler.jsonc).
