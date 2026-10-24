@@ -1,0 +1,51 @@
+---
+import Section from "../ui/Section.astro";
+
+const features = [
+    {
+        title: "Queued delivery",
+        description: "Bursts are absorbed by a queue, so traffic spikes never block your request path.",
+    },
+    {
+        title: "Message templates",
+        description: "Define a template once and pass variables per send — no string concatenation in app code.",
+    },
+    {
+        title: "Delivery tracking",
+        description: "Follow each message through queued, sent and failed states with an auditable record.",
+    },
+    {
+        title: "Typed payloads",
+        description: "Every request is validated against a schema and inferred end to end in TypeScript.",
+    },
+    {
+        title: "Scoped access",
+        description: "Token-based auth with per-route permissions, so integrations only get what they need.",
+    },
+    {
+        title: "Scheduled sends",
+        description: "Reminders and campaigns are driven by schedules instead of hand-rolled cron jobs.",
+    },
+];
+---
+
+<Section id="features">
+    <div class="max-w-2xl space-y-4">
+        <p class="text-sm font-semibold uppercase tracking-wider text-brand-600">Features</p>
+        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Everything around the send</h2>
+        <p class="text-lg leading-8 text-slate-600">
+            The plumbing that usually gets rebuilt badly in-house, handled once.
+        </p>
+    </div>
+
+    <ul class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+            features.map((feature) => (
+                <li class="rounded-2xl border border-slate-200 bg-white p-6 transition-colors hover:border-brand-200">
+                    <h3 class="text-base font-semibold text-slate-900">{feature.title}</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">{feature.description}</p>
+                </li>
+            ))
+        }
+    </ul>
+</Section>

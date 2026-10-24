@@ -30,13 +30,13 @@ src/
 ├── components/
 │   ├── layout/                # page chrome: Header, Footer
 │   ├── ui/                    # primitives: Container, Section, Button
-│   └── sections/{section}/    # one folder per landing section (the analogue of api/{feature})
-│       ├── {Section}.astro    # markup + utility classes
-│       └── {section}.content.ts  # copy/data, typed via common/interfaces
+│   └── sections/              # {Section}.astro per section; {section}/ folder only for multi-component sections
+│       ├── {Section}.astro    # copy + markup + utility classes
+│       └── {section}/*.astro  # optional: a section split into several components
 ├── common/                    # shared, page-state-free infrastructure
 │   ├── constants/             # site.config.ts (name, description, nav, CTAs) + index.ts re-exports
 │   ├── helpers/               # classNames (utility-string composition)
-│   └── interfaces/            # content contracts (HeroContent, FeaturesContent, NavItem, ...)
+│   └── interfaces/            # site contracts (NavItem, SocialLink)
 ├── styles/
 │   ├── global.css             # entry: tailwind import + tokens + base
 │   ├── tokens.css             # @theme: brand palette, font stack
@@ -56,42 +56,43 @@ Layering rule: `page → section → ui primitive`. A page only orders sections;
 - **Mobile-first.** Base utilities target small screens; add `sm:` (40rem) and `lg:` (64rem) for larger layouts.
 - `src/styles/global.css` stays an entry point (engine + tokens + base). It is imported once, by `Layout.astro`.
 
-## Section convention (`src/components/sections/{section}/`)
+## Section convention (`src/components/sections/`)
 
-Every section is a folder with a component and a sibling content module typed by an interface in `src/common/interfaces/content.interface.ts`:
+A section is one self-contained component: copy, markup and utility classes in the same `.astro` file. There is no sibling content module — repeating items are a local `const` array in the component frontmatter.
 
-```ts
-// components/sections/features/features.content.ts
-export const featuresContent: FeaturesContent = {
-    eyebrow: "Features",
-    title: "...",
-    description: "...",
-    items: [{ title: "...", description: "..." }],
-};
-```
+File placement depends on how many components a section owns:
+
+- **One component (default):** `sections/{Section}.astro` — e.g. `sections/Hero.astro`.
+- **Several components:** `sections/{section}/` — e.g. `sections/pricing/Pricing.astro` + `sections/pricing/PricingCard.astro`. The section's public entry point keeps the PascalCase name; nothing outside the folder imports the internal helpers.
+
+Start flat and only create a folder when a second component genuinely belongs to that section.
 
 ```astro
 ---
-import Section from "../../components/ui/Section.astro";
-import { featuresContent } from "./features.content";
+import Section from "../ui/Section.astro";
+
+const features = [
+    { title: "Queued delivery", description: "..." },
+    { title: "Scoped access", description: "..." },
+];
 ---
 <Section id="features">
-    <div class="max-w-2xl space-y-4">
-        <p class="text-sm font-semibold uppercase tracking-wider text-brand-600">{featuresContent.eyebrow}</p>
-        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{featuresContent.title}</h2>
-    </div>
+    <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Everything around the send</h2>
+    <ul class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {features.map((feature) => <li>{feature.title}</li>)}
+    </ul>
 </Section>
 ```
 
-- Copy is **never** inlined in `pages/` — edit the section's `*.content.ts`.
+- Copy lives only in the section that renders it — never in `pages/`, never in a shared data module.
+- Text containing `{ … }` (code samples) stays in a frontmatter template string so Astro does not parse it as an expression.
 - Anchor ids used by navigation (`#features`, `#how-it-works`, `#faq`, `#get-started`) are owned by the section component and referenced from `siteConfig.nav` / CTA content. Renaming an id means updating `src/common/constants/site.config.ts`.
 
 ### Registering a new section
 
-1. Create `src/components/sections/{section}/` with `{Section}.astro` + `{section}.content.ts`.
-2. Add the content interface to `src/common/interfaces/content.interface.ts` if none fits.
-3. Import and place it in `src/pages/index.astro` (order = visual order).
-4. If it needs a nav entry, add it to `siteConfig.nav` and give the section root a matching `id`.
+1. Create `src/components/sections/{Section}.astro` (use a `{section}/` folder only when it needs several components).
+2. Import and place it in `src/pages/index.astro` (order = visual order).
+3. If it needs a nav entry, add it to `siteConfig.nav` and give the section root a matching `id`.
 
 ## UI primitives (`src/components/ui/`)
 

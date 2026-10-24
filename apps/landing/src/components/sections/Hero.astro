@@ -1,7 +1,13 @@
 ---
-import Button from "../../ui/Button.astro";
-import Container from "../../ui/Container.astro";
-import { heroContent } from "./hero.content";
+import Button from "../ui/Button.astro";
+import Container from "../ui/Container.astro";
+
+// Kept as a string so the `{ … }` braces in the sample are not parsed as Astro expressions.
+const snippet = `await sms.send({
+    to: "+15551234567",
+    template: "otp",
+    variables: { code: "123456" },
+});`;
 ---
 
 <section class="border-b border-slate-100 bg-gradient-to-b from-brand-50/60 to-white">
@@ -10,20 +16,21 @@ import { heroContent } from "./hero.content";
             <p
                 class="inline-flex rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-medium text-brand-700"
             >
-                {heroContent.eyebrow}
+                Transactional SMS API
             </p>
 
             <h1 class="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-                {heroContent.title}
+                Send SMS that actually arrives
             </h1>
 
-            <p class="max-w-xl text-lg leading-8 text-slate-600">{heroContent.description}</p>
+            <p class="max-w-xl text-lg leading-8 text-slate-600">
+                OTPs, alerts and notifications over one typed API — queued delivery, templates and per-message tracking
+                included.
+            </p>
 
             <div class="flex flex-wrap gap-3">
-                <Button href={heroContent.primaryCta.href} size="lg">{heroContent.primaryCta.label}</Button>
-                <Button href={heroContent.secondaryCta.href} size="lg" variant="secondary">
-                    {heroContent.secondaryCta.label}
-                </Button>
+                <Button href="#get-started" size="lg">Get started</Button>
+                <Button href="#features" size="lg" variant="secondary">See features</Button>
             </div>
         </div>
 
@@ -32,9 +39,9 @@ import { heroContent } from "./hero.content";
                 <span class="size-2.5 rounded-full bg-slate-200"></span>
                 <span class="size-2.5 rounded-full bg-slate-200"></span>
                 <span class="size-2.5 rounded-full bg-slate-200"></span>
-                <span class="ml-2 text-xs text-slate-500">{heroContent.snippet.title}</span>
+                <span class="ml-2 text-xs text-slate-500">Send a message</span>
             </div>
-            <pre class="overflow-x-auto p-5 text-sm leading-6 text-slate-700"><code>{heroContent.snippet.code}</code></pre>
+            <pre class="overflow-x-auto p-5 text-sm leading-6 text-slate-700"><code>{snippet}</code></pre>
         </div>
     </Container>
 </section>

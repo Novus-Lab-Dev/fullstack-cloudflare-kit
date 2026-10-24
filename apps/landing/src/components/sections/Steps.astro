@@ -1,0 +1,43 @@
+---
+import Section from "../ui/Section.astro";
+
+const steps = [
+    {
+        index: "01",
+        title: "Create an account",
+        description: "Sign up and generate an API token scoped to the permissions your service needs.",
+    },
+    {
+        index: "02",
+        title: "Add a template",
+        description: "Define the message once with named variables, then reuse it for every send.",
+    },
+    {
+        index: "03",
+        title: "Send",
+        description: "POST to the messages endpoint — delivery, retries and tracking are handled downstream.",
+    },
+];
+---
+
+<Section id="how-it-works" tone="muted">
+    <div class="max-w-2xl space-y-4">
+        <p class="text-sm font-semibold uppercase tracking-wider text-brand-600">How it works</p>
+        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Three steps to the first send</h2>
+        <p class="text-lg leading-8 text-slate-600">
+            No SDK ceremony, no provisioning calls in your request path.
+        </p>
+    </div>
+
+    <ol class="mt-14 grid gap-10 sm:grid-cols-3">
+        {
+            steps.map((step) => (
+                <li class="space-y-3">
+                    <span class="block font-mono text-sm font-semibold text-brand-600">{step.index}</span>
+                    <h3 class="text-base font-semibold text-slate-900">{step.title}</h3>
+                    <p class="text-sm leading-6 text-slate-600">{step.description}</p>
+                </li>
+            ))
+        }
+    </ol>
+</Section>

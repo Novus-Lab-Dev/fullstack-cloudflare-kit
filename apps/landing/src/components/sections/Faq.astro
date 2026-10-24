@@ -1,0 +1,48 @@
+---
+import Section from "../ui/Section.astro";
+
+const questions = [
+    {
+        question: "Do I need a sender ID to start?",
+        answer: "You can send from a sandbox sender while integrating, then attach a real sender ID before going live.",
+    },
+    {
+        question: "What happens when a carrier rejects a message?",
+        answer: "Failed sends are retried with backoff by the queue, and the final state is recorded against the message.",
+    },
+    {
+        question: "Can message copy live outside my code?",
+        answer: "Yes — templates are stored server side and referenced by name, with variables filled in per send.",
+    },
+    {
+        question: "How do I keep credentials out of clients?",
+        answer: "Tokens are scoped and permission-checked per route, so they are intended for server-to-server use only.",
+    },
+];
+---
+
+<Section id="faq">
+    <div class="max-w-2xl space-y-4">
+        <p class="text-sm font-semibold uppercase tracking-wider text-brand-600">FAQ</p>
+        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Questions before you integrate</h2>
+        <p class="text-lg leading-8 text-slate-600">
+            Short answers to the things that block a first integration.
+        </p>
+    </div>
+
+    <div class="mt-12 max-w-3xl divide-y divide-slate-200 border-y border-slate-200">
+        {
+            questions.map((item) => (
+                <details class="group py-5">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-medium text-slate-900">
+                        {item.question}
+                        <span class="text-slate-400 transition-transform group-open:rotate-45" aria-hidden="true">
+                            +
+                        </span>
+                    </summary>
+                    <p class="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
+                </details>
+            ))
+        }
+    </div>
+</Section>

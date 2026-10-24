@@ -21,11 +21,11 @@ src/
 ├── components/
 │   ├── layout/             # Header, Footer
 │   ├── ui/                 # Container, Section, Button
-│   └── sections/{section}/ # one folder per section: {Section}.astro + {section}.content.ts
+│   └── sections/           # {Section}.astro per section (folder only when it has several components)
 ├── common/
 │   ├── constants/          # site.config.ts (metadata, nav, CTAs)
 │   ├── helpers/            # classNames
-│   └── interfaces/         # content contracts
+│   └── interfaces/         # site contracts (NavItem, SocialLink)
 ├── styles/
 │   ├── global.css          # entry: tailwind + tokens + base
 │   ├── tokens.css          # @theme brand palette, font stack
@@ -41,4 +41,4 @@ Tailwind utilities live directly in the `.astro` markup; shared primitives (`Con
 - Neutrals: Tailwind's `slate-*` scale
 - `src/styles/global.css` is imported once by `Layout.astro` and stays an entry point — no per-section CSS files.
 
-Copy lives in `components/sections/*/*.content.ts`; site metadata lives in `src/common/constants/site.config.ts`. See [AGENTS.md](./AGENTS.md) for the full conventions.
+Copy lives inside each section component (a local `const` array for repeated items). Site metadata lives in `src/common/constants/site.config.ts`. See [AGENTS.md](./AGENTS.md) for the full conventions.

@@ -1,9 +1,5 @@
 import type { NavItem, SocialLink } from "../interfaces/content.interface";
 
-/**
- * Single source of truth for site-wide metadata, navigation and external links.
- * Pages and layouts read from here instead of hardcoding copy.
- */
 export const siteConfig = {
     name: "SMS",
     tagline: "Transactional SMS API",
