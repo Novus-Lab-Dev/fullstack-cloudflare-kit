@@ -1,6 +1,6 @@
 # AGENTS.md — `apps/api`
 
-Guidance for AI agents (and humans) working in this API package.
+Guidance for AI agents (and humans) working in this API package. Describe patterns here generically; concrete features (e.g. `user`) are examples of the convention, not the rule.
 
 ## Stack
 
@@ -8,7 +8,7 @@ Guidance for AI agents (and humans) working in this API package.
 - **HTTP framework:** Hono + custom TypeScript decorators (`experimentalDecorators`), route metadata registered at class-definition time.
 - **Validation:** Zod v4. DTOs are Zod schemas + `z.infer` types; validation runs automatically in the controller wrapper (`validateBody` / `validateQuery`).
 - **ORM:** Drizzle ORM + Cloudflare D1 (SQLite). Migrations via `drizzle-kit generate` + `wrangler d1 migrations apply`.
-- **Docs:** OpenAPI routes are auto-registered from decorator options (`registerRoutesForDocs`); served at `/docs.json` via `setupOpenApi` (wired up in `AppModule.setupDocs()`).
+- **Docs:** OpenAPI spec is auto-generated from decorator options; Swagger UI at `/docs`, spec at `/docs.json`.
 
 ## Commands
 
@@ -21,58 +21,81 @@ Guidance for AI agents (and humans) working in this API package.
 | Apply migrations (local / remote) | `bun run db:migrate` / `bun run db:migrate:remote` |
 | Regenerate binding types | `bun run cf-typegen` → `worker-configuration.d.ts` |
 
+## Architecture map
+
+```
+src/
+├── main.ts                  # Worker entry: fetch / scheduled / queue → AppModule
+├── app.module.ts            # root module: middlewares, feature modules, docs, 404/500
+├── api/{feature}/           # one folder per API feature (module/controller/service/dto)
+├── db/
+│   ├── db-client.ts         # module-scope Drizzle client (DBClient.client)
+│   ├── schema/{domain}.schema.ts       # table definitions + inferred row types
+│   └── contracts/{domain}.repository.ts # repositories (hexagonal persistence layer)
+└── common/                  # shared infrastructure (see sections below)
+    ├── auth/                # JwtHelper
+    ├── constants/           # Environment (env.ts) + shared fixed values (index.ts)
+    ├── email/               # EmailService + *.mjml templates
+    ├── helpers/             # ResponseHelper, validation.helper
+    ├── interfaces/          # AppEnv, IController, IModule, User
+    ├── middleware/          # Middleware classes + MiddlewareRegistry
+    ├── openapi/             # spec generation + Swagger UI setup
+    ├── queue/               # QueueProcessor + QueueJob types
+    └── schedule/            # ScheduleProcessor
+```
+
+Layering rule (hexagonal): `controller → service → repository contract → db`. Controllers never touch Drizzle; services extend repository contracts; only repositories know tables and the DB client.
+
 ## Database convention (`src/db/`)
 
 ### Schema — `src/db/schema/{domain}.schema.ts`
 
-One file per domain; a single domain file may hold **multiple tables**. Export the table plus inferred row types:
+One file per domain; a single domain file may hold **multiple tables**. Name tables `{entity}Table` and export both inferred row types:
 
 ```ts
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-export const usersTable = sqliteTable("users", {
+export const postsTable = sqliteTable("posts", {
     id: integer().primaryKey({ autoIncrement: true }),
-    email: text("email").notNull().unique(),
-    name: text("name").notNull(),
-    role: text("role").notNull().default("user"),
+    title: text("title").notNull(),
 });
 
-export type UserRow = typeof usersTable.$inferSelect;
-export type NewUserRow = typeof usersTable.$inferInsert;
+export type PostRow = typeof postsTable.$inferSelect;
+export type NewPostRow = typeof postsTable.$inferInsert;
 ```
 
 ### Contracts (repositories) — `src/db/contracts/{domain}.repository.ts`
 
-Hexagonal-architecture rule: services never talk to Drizzle directly; all persistence goes through a **repository contract** that extends the generic, table-driven `BaseRepository`:
+All persistence goes through a **repository** extending the generic, table-driven `BaseRepository`; re-export row types as `{Entity}Record` / `New{Entity}Record`:
 
 ```ts
 import { eq } from "drizzle-orm";
-import { usersTable, type NewUserRow, type UserRow } from "../schema/users.schema";
+import { postsTable, type NewPostRow, type PostRow } from "../schema/posts.schema";
 import { BaseRepository, type D1Client } from "./base.repository";
 
-export type UserRecord = UserRow;
-export type NewUserRecord = NewUserRow;
+export type PostRecord = PostRow;
+export type NewPostRecord = NewPostRow;
 
-export class UserRepository extends BaseRepository<typeof usersTable> {
+export class PostRepository extends BaseRepository<typeof postsTable> {
     constructor(db: D1Client) {
-        super(db, usersTable, usersTable.id);
+        super(db, postsTable, postsTable.id);
     }
 
-    async findByEmail(email: string): Promise<UserRecord | null> {
-        return await this.findOne({ where: eq(usersTable.email, email) });
+    async findByTitle(title: string): Promise<PostRecord | null> {
+        return await this.findOne({ where: eq(postsTable.title, title) });
     }
 }
 ```
 
-`BaseRepository` provides CRUD (`create`, `update`, `delete`) plus query-descriptor reads (`findOne` / `findAll` / `findWithPagination` accepting `{ select, where, orderBy, limit, skip, page }`). Add only domain-specific finders here; keep generic reads in the base.
+`BaseRepository` provides CRUD (`create`, `update`, `delete`) plus query-descriptor reads (`findOne` / `findAll` / `findWithPagination` accepting `{ select, where, orderBy, limit, skip, page }`). Add only domain-specific finders in the repository; keep generic reads in the base and express them as query descriptors, not raw SQL.
 
-The DB client is a module-scope static (`src/db/db-client.ts`): `DBClient.client` — a `DrizzleD1Database` built from `cloudflare:workers` `env.DB`. Controllers/services construct repositories with it.
+The DB client is a module-scope static (`db-client.ts`): `DBClient.client` — a `DrizzleD1Database` built from `cloudflare:workers` `env.DB`. Services are constructed with it; repositories receive it via constructor.
 
-After schema changes: run `bun run db:generate`, then apply migrations.
+After schema changes: run `bun run db:generate`, then apply migrations. Never edit generated SQL by hand.
 
 ## Environment (`src/common/constants/env.ts`)
 
-The `EnvironmentVariables` interface types every secret/var used through Hono's `env(c)`:
+The `EnvironmentVariables` interface types every secret/var read through Hono's `env(c)`:
 
 ```ts
 interface EnvironmentVariables {
@@ -81,11 +104,12 @@ interface EnvironmentVariables {
 }
 ```
 
-**Whenever you add a new environment variable, add its type to this interface too.** Then read it via:
+**Whenever you add a new environment variable, add its type to this interface too**, then read it via:
 
 - `Environment.getByContext(key, c)` — optional read inside a request context.
 - `Environment.requireByContext(key, c)` — throws if missing.
-- Worker module-scope bindings (e.g. `env.MAILCHANNELS_ENDPOINT`, `env.DB`) come from `cloudflare:workers` `env` — they are typed via `wrangler.jsonc` bindings + `bun run cf-typegen`, not through this interface.
+
+Worker module-scope bindings (`env.DB`, queues, vars declared in `wrangler.jsonc`) are a separate mechanism: they come from `cloudflare:workers` `env` and are typed via `bun run cf-typegen` — not through this interface.
 
 ## Constants (`src/common/constants/index.ts`)
 
@@ -99,14 +123,14 @@ Do not call this manually in handlers — the `IController` route wrapper alread
 
 Docs are generated automatically from decorator options — never hand-write OpenAPI:
 
-- `registerRoutesForDocs` is called by `IController` with each route's `{ method, path, options }`; `summary`, `tags`, `body`, `query` feed the doc.
-- `schema.generator.ts` converts Zod schemas to JSON Schema into `components.schemas`.
-- Enable the endpoint by calling `setupOpenApi(this.app, "/docs")` in `AppModule.setupDocs()` (invoked from the constructor); serves the doc at `/docs.json` (no HTML UI is hosted).
+- `IController` calls `registerRoutesForDocs` with each route's `{ method, path, options }`; `summary`, `tags`, `body`, `query` feed the spec. Docs paths include the controller's `static basePath`; route registration does not (Hono `basePath` applies it at mount time) — do not repeat the base path in decorator route paths.
+- `schema.generator.ts` converts Zod schemas to JSON Schema under `components.schemas`.
+- `setupOpenApi(app, "/docs")` (wired via `AppModule.setupDocs()`) serves Swagger UI at `/docs` and the spec at `/docs.json`.
 - Describe DTO fields with `.describe("...")` so they show up in the generated docs.
 
 ## User type (`src/common/interfaces/user.interface.ts`)
 
-The canonical JWT/auth user shape shared across `JwtHelper`, `AuthorizationMiddleware`, `AppEnv.Variables.user`, and `checkPermission`:
+The canonical JWT/auth user shape shared across `JwtHelper`, `AuthorizationMiddleware`, `AppEnv.Variables.user`, and route permission checks:
 
 ```ts
 export type User = {
@@ -128,7 +152,7 @@ const token = await jwt.sign(user, context);   // payload extends User
 const user = await jwt.verify(token, context); // returns User
 ```
 
-The `AuthorizationMiddleware` uses this helper to verify Bearer tokens and set `c.set("user", payload)`; `JwtHelper` is HS256 by default.
+`AuthorizationMiddleware` uses this helper to verify Bearer tokens and set `c.set("user", payload)`. HS256 by default.
 
 ## Email (`src/common/email/email.service.ts`)
 
@@ -138,16 +162,16 @@ The `AuthorizationMiddleware` uses this helper to verify Bearer tokens and set `
 await EmailService.send({
     to: "user@example.com",
     subject: "Welcome",
-    template: "base",                       // optional, defaults to "base"
+    template: "base",                        // optional, defaults to "base"
     variables: { name: "John" },             // {{name}} escaped, {{{name}}} raw
 });
 ```
 
-To add a template: create `xxx.mjml`, import it in `email.service.ts`, and register it in the `templates` map — the key becomes selectable via `EmailTemplate` type automatically.
+To add a template: create `{name}.mjml` next to `base.mjml`, import it in `email.service.ts`, and register it in the `templates` map — the key becomes selectable via the `EmailTemplate` type automatically.
 
 ## API feature convention (`src/api/{feature}/`)
 
-Each feature is a folder under `src/api/`:
+Each feature is a folder under `src/api/`; name everything after the feature (plural noun for routes, e.g. `posts`):
 
 ```
 src/api/{feature}/
@@ -163,7 +187,7 @@ src/api/{feature}/
 Extends the domain repository and adds business logic on top of it (no Drizzle access outside the repository layer):
 
 ```ts
-export class UserService extends UserRepository {
+export class PostService extends PostRepository {
     constructor(db: D1Client) {
         super(db);
     }
@@ -172,59 +196,60 @@ export class UserService extends UserRepository {
 
 ### Controller
 
-Extends `IController`; decorator options carry validation schema, OpenAPI metadata, and permissions. Handlers receive `(c: HandlerContext, body, query)` — `body`/`query` types are inferred from the Zod schema in the decorator. Always respond via `ResponseHelper`:
+Extends `IController`; declare `static basePath` as the plural route segment. Decorator options carry validation schema, OpenAPI metadata, and permissions. Handlers receive `(c: HandlerContext, body, query)` — `body`/`query` types are inferred from the Zod schema in the decorator. Always respond via `ResponseHelper`:
 
 ```ts
-export class UserController extends IController {
-    static basePath?: string | undefined = "/users";
-    private userService = new UserService(DBClient.client);
+export class PostController extends IController {
+    static basePath?: string | undefined = "/posts";
+    private postService = new PostService(DBClient.client);
 
     constructor(app: Hono<AppEnv>) {
         super(app);
     }
 
     @Post("/", {
-        body: CreateUserSchema,
-        summary: "Create a User",
-        tags: ["Users"],
-        permission: { role: "admin", required: ["user.manage"] },
+        body: CreatePostSchema,
+        summary: "Create a Post",
+        tags: ["Posts"],
+        permission: { role: "admin", required: ["post.manage"] },
     })
-    async create(c: HandlerContext, payload: CreateUserDto) {
-        const user = await this.userService.create(payload);
-        return ResponseHelper.success(user, { status: 201 });
+    async create(c: HandlerContext, payload: CreatePostDto) {
+        const post = await this.postService.create(payload);
+        return ResponseHelper.success(post, { status: 201 });
     }
 
     @Get("/:id", {
-        summary: "Get user By id",
-        tags: ["Users"],
-        permission: { role: "user", required: ["user.read"] },
+        summary: "Get post by id",
+        tags: ["Posts"],
+        permission: { role: "user", required: ["post.read"] },
     })
     async getById(c: HandlerContext) {
-        const user = await this.userService.findOne({ where: eq(usersTable.id, Number(c.req.param("id"))) });
-        return ResponseHelper.success(user);
+        const post = await this.postService.findOne({ where: eq(postsTable.id, Number(c.req.param("id"))) });
+        return ResponseHelper.success(post);
     }
 }
 ```
 
-Available decorators: `@Get`, `@Post`, `@Put`, `@Patch`, `@Delete` — signature `(path, options?)` with `options: { body?, query?, summary?, tags?, permission? }`.
+Available decorators: `@Get`, `@Post`, `@Put`, `@Patch`, `@Delete` — signature `(path, options?)` with `options: { body?, query?, summary?, tags?, permission? }`. Route paths in decorators are **relative to `basePath`** (the module's Hono `basePath` supplies the prefix at mount time).
 
 ### Module
 
 Extends `IModule`, passes the controller's `basePath` to `super`, and instantiates the controller with the sub-app:
 
 ```ts
-export class UserModule extends IModule {
+export class PostModule extends IModule {
     constructor() {
-        super(UserController.basePath);
-        new UserController(this.app);
+        super(PostController.basePath);
+        new PostController(this.app);
     }
 }
 ```
 
 ### Registering a feature
 
-1. Create the folder `src/api/{feature}/` with module/controller/service (+ dto).
+1. Create `src/api/{feature}/` with module/controller/service (+ dto files), backed by a `{domain}.schema.ts` and `{domain}.repository.ts` if new to the domain.
 2. Add the module class to the `modules` array in `src/app.module.ts` — `AppModule.routes()` mounts each via `app.route("/", module.geApp())`.
+3. Run `bun run check`, then verify the feature appears in `/docs`.
 
 ## Permissions & roles
 
@@ -233,27 +258,31 @@ Defined per route in decorator `permission` (`RoutePermission`):
 ```ts
 permission: {
     role: "admin",              // must match the JWT `role` claim
-    required: ["user.manage"],  // permissions the JWT user must hold
+    required: ["post.manage"],  // permissions the JWT user must hold
 }
 ```
 
 Flow:
-1. `AuthorizationMiddleware` (registered in `MiddlewareRegistry` on `AuthorizationMiddleware.protectedPath`, currently `api/*`) verifies the Bearer JWT and sets `c.get("user")`.
+1. `AuthorizationMiddleware` (registered in `MiddlewareRegistry` against `AuthorizationMiddleware.protectedPath`) verifies the Bearer JWT and sets `c.get("user")`.
 2. `IController`'s route wrapper calls `checkPermission` before the handler: role mismatch or any missing permission → `403 FORBIDDEN` via `ResponseHelper.error`.
 3. A user permission of `"*"` grants everything.
 
-Note: authorization middleware is currently **commented out** in `MiddlewareRegistry.register()` — uncomment to enforce auth; routes without `permission` options stay public.
+Conventions:
+- Permission strings follow `{resource}.{action}` (`post.read`, `post.manage`); pick a role per route deliberately or leave `permission` off for public routes.
+- Auth enforcement is a one-line registration in `MiddlewareRegistry.register()` — check that the `AuthorizationMiddleware` line is active before assuming protected routes are enforced, and keep sensitive routes protected in every environment.
 
 ## Response convention
 
-Never return raw `Response.json(...)` from handlers. Use `ResponseHelper.success(data, { status?, message? })` and `ResponseHelper.error(message, { status, code })` with codes from `Code` (`AUTH_FAILED | FORBIDDEN | NOT_FOUND | BAD_REQUEST | SERVER_ERROR`). Global 404/500 handling lives in `AppModule.notFound()/onError()`.
+Never return raw `Response.json(...)` from handlers. Use `ResponseHelper.success(data, { status?, message? })` and `ResponseHelper.error(message, { status, code })` with codes from `Code` (`AUTH_FAILED | FORBIDDEN | NOT_FOUND | BAD_REQUEST | SERVER_ERROR`). Global 404/500 handling lives in `AppModule.notFound()` / `onError()` — don't add per-handler equivalents.
 
 ## Queue & schedule
 
-Worker entry (`src/main.ts`) forwards `scheduled` and `queue` handlers to `AppModule`, which delegates to `ScheduleProcessor` and `QueueProcessor` (`src/common/schedule|queue/`). Queue jobs are typed via `QueueJob` and bound as `JOB_QUEUE` (`AppEnv.Bindings`). Add new job kinds there, not ad-hoc.
+Worker entry (`src/main.ts`) forwards `scheduled` and `queue` handlers to `AppModule`, which delegates to `ScheduleProcessor` and `QueueProcessor` (`src/common/schedule|queue/`). Queue jobs are typed via the `QueueJob` union and bound as `JOB_QUEUE` (`AppEnv.Bindings`); add new job kinds there (plus a branch in the processor), not ad-hoc payloads.
 
 ## Misc rules
 
-- All Hono generics use `AppEnv` (`src/common/interfaces/app-env.interface.ts`) — extend `Bindings`/`Variables` there when adding D1/Queue/vars usage.
+- All Hono generics use `AppEnv` (`src/common/interfaces/app-env.interface.ts`) — extend `Bindings`/`Variables` there when adding D1/Queue/vars usage; never widen types locally.
 - Middleware classes extend `Middleware` (`middleware.interface.ts`) and expose the handler as an arrow-function property `use = async (c, next) => {...}` so `this` stays bound when registered via `app.use(path, mw.use)`.
-- Naming: files are `dot.case` (`user.controller.ts`, `base.mjml`); classes are PascalCase; tables are `{name}Table`.
+- Shared services/helpers are static classes (`ResponseHelper`, `EmailService`) or contextless classes instantiated once per consumer (`JwtHelper`, repositories) — nothing in `common/` may hold request state.
+- Naming: files are `dot.case` (`{feature}.controller.ts`, `{name}.mjml`); classes are PascalCase; tables are `{entity}Table`; DTO schemas are `{Action}{Entity}Schema` with types `{Action}{Entity}Dto`.
+- Prefer fixing the shared abstraction (`BaseRepository`, `IController`, helpers) over duplicating logic in a feature; keep feature-specific code inside its folder.
