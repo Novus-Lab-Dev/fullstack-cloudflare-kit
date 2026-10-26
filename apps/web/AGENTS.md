@@ -13,6 +13,8 @@ Guidance for AI agents (and humans) working in this web SPA package. Describe pa
 - **Table:** `src/components/common/table/` exports `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `TableCaption`, `TableEmpty`.
 - **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`. Class merging via `cn` utility.
 - **Components:** shadcn/ui primitives (`components/ui/`) + Spectrum UI registry (`components/spectrumui/`). Animation via Framer Motion / Motion.
+- **Feedback:** `sonner` toasts for mutation results (one `<Toaster />` mounted in `routes/__root.tsx`), Radix-backed `sheet` (end drawer) and `alert-dialog` (confirm) primitives in `components/ui/`.
+- **Mock data:** `src/lib/data.ts` holds the in-memory collections every dashboard screen reads from, until the API grows real endpoints.
 - **State:** No external state libs. Context providers (`providers/`) for cross-cutting concerns (auth, query client); component-local state for everything else.
 - **Devtools:** TanStack Devtools (`@tanstack/react-devtools` + `@tanstack/react-router-devtools` + `@tanstack/react-query-devtools`).
 
@@ -43,11 +45,13 @@ src/
 │   ├── _authenticated.tsx        # pathless layout: beforeLoad guard (unauth → /sign-in) + AppShell
 │   ├── _authenticated/
 │   │   ├── index.tsx             # / → redirect to /dashboard (for authenticated users)
-│   │   ├── dashboard.tsx         # /dashboard
-│   │   ├── messages.tsx          # /messages
+│   │   ├── dashboard.tsx         # /dashboard (stat cards + recent activity)
+│   │   ├── messages.tsx          # /messages (table + drawer form + confirm)
 │   │   ├── templates.tsx         # /templates
+│   │   ├── templates.new.tsx     # /templates/new (full-page complex form)
+│   │   ├── templates.$id.edit.tsx  # /templates/:id/edit (same form, prefilled)
 │   │   ├── contacts.tsx          # /contacts
-│   │   └── settings.tsx          # /settings
+│   │   └── settings.tsx          # /settings (page form)
 │   └── sign-in.tsx               # /sign-in (public; beforeLoad authed → /dashboard)
 ├── providers/                    # React context providers + custom hooks
 │   ├── auth-provider.tsx         # AuthContext + useAuth
@@ -55,6 +59,7 @@ src/
 │   └── query-provider.tsx        # QueryClientProvider + devtools gate
 ├── lib/                          # shared utilities and clients
 │   ├── api.ts                    # axios instance + verb facade + token helpers
+│   ├── data.ts                   # mock in-memory collections + CRUD facade
 │   ├── mock-auth.ts              # dev-only mock session tokens (login is mocked)
 │   ├── query.ts                  # queryClient singleton
 │   └── utils.ts                  # cn()
@@ -62,9 +67,13 @@ src/
 │   └── auth.ts                   # AuthUser
 └── components/
     ├── app-shell.tsx             # sidebar + top bar + <Outlet />; owns NAV_ITEMS
-    ├── section-placeholder.tsx   # scaffold for not-yet-built route sections
+    ├── page-header.tsx           # screen title/description + trailing actions slot
+    ├── form-drawer.tsx           # end drawer wrapping a react-hook-form form
+    ├── confirm-dialog.tsx        # alert-dialog wrapper for destructive actions
+    ├── status-badge.tsx          # Badge + message StatusBadge
+    ├── template-form.tsx         # reference full-page form (used by new + edit routes)
     ├── full-page-spinner.tsx     # shared loading indicator
-    ├── ui/                       # shadcn primitives (button, input, card, …)
+    ├── ui/                       # shadcn primitives (button, input, card, sheet, alert-dialog, …)
     └── spectrumui/               # Spectrum registry components (data-table, …)
 ```
 
@@ -229,6 +238,31 @@ function SignIn() {
 ## Table (`src/components/common/table/`)
 
 Semantic HTML table wrappers: `<Table>` renders a scroll region (`role="region" tabIndex=0`) and provides consistent padding/border tokens via `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableHead>`, `<TableCell>`, `<TableCaption>`. Use `<TableEmpty colSpan={n}>` for zero-result states instead of hand-writing a placeholder row.
+
+## Dashboard blocks
+
+Screens under `_authenticated/` are assembled from a small set of app-level blocks. Reach for these before hand-writing anything:
+
+| Need | Use | Notes |
+|---|---|---|
+| Screen title + description + actions | `PageHeader` | actions slot holds buttons/links/filters |
+| Rows of records | `common/table` kit | trailing right-aligned cell of `size="icon-sm"` ghost buttons for row actions |
+| Status / kind chips | `StatusBadge`, `Badge` | tone map lives next to the badge; colors come from theme tokens |
+| Create/edit with ~5 fields or fewer | `FormDrawer` | end drawer; caller owns `useForm` and calls `reset()` in the open handler |
+| Longer / multi-section / preview-heavy forms | their own route | e.g. `/templates/new` + `/templates/$id/edit` sharing one form component |
+| Irreversible action | `ConfirmDialog` | `destructive` variant; caller keeps the target row in state and closes in `onSuccess` |
+| Outcome of a mutation | `toast.success` / `toast.error` (sonner) | never an inline "saved!" banner; `<Toaster />` is mounted once in `__root.tsx` |
+
+Loading and empty states stay inside the block: tables render `TableEmpty` with a "Loading…" or "no match" message, drawer/dialogs disable their action while the mutation runs (`busy`).
+
+## Mock data (`src/lib/data.ts`)
+
+The dashboard runs on mocked in-memory collections (messages, templates, contacts, workspace settings) because the API only exposes `/user` today. Every function is async (~250 ms) and returns `structuredClone`d rows, so a body can be replaced by an `api.*` call without touching the screens that read it.
+
+- Reads go through TanStack Query, one key per collection: `['messages']`, `['templates']`, `['template', id]`, `['contacts']`, `['settings']`, `['overview']`.
+- Writes use `useMutation`, then `queryClient.invalidateQueries` for the touched collection **plus `['overview']`** (the dashboard stat cards and recent list derive from it), and close the drawer/dialog in `onSuccess`.
+- Forms that need server-loaded defaults are child components mounted after the fetch settles, so `useForm` takes `defaultValues` from props instead of syncing in `useEffect`.
+- Exit plan per collection: move its types to `src/interfaces/{domain}.ts`, point the query/mutations at `api.*`, delete the seed arrays.
 
 ## TanStack Query usage (`src/lib/query.ts`)
 

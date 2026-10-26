@@ -53,6 +53,7 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
   --color-brand: var(--brand);
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -62,6 +63,7 @@ body {
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
+  --radius-card: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
@@ -75,6 +77,7 @@ body {
 
   --color-background: #f6f8fc;
   --color-surface: #ffffff;
+  --color-surface-soft: #eef2f8;
   --color-text: #253247;
   --color-muted: #64748b;
   --color-border: #e5eaf2;
@@ -90,6 +93,7 @@ body {
   --background: var(--color-background);
   --foreground: var(--color-text);
   --surface: var(--color-surface);
+  --surface-soft: var(--color-surface-soft);
   --card: var(--color-surface);
   --card-foreground: var(--color-text);
   --popover: var(--color-surface);
