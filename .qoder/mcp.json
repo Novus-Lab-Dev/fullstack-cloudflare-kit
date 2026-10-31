@@ -6,6 +6,9 @@
 				"-y",
 				"@spectrumui/mcp"
 			]
+		},
+		"figma": {
+			"url": "https://mcp.figma.com/mcp"
 		}
 	}
 }
