@@ -16,12 +16,21 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { formatDateTime, getOverview } from '@/lib/data'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatDateTime, getOverview, listContacts } from '@/lib/data'
+import type { Contact } from '@/lib/data'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
   component: Dashboard,
@@ -36,6 +45,7 @@ function Dashboard() {
       <PageHeader
         title="Dashboard"
         description="Mock workspace snapshot — every number below comes from lib/data.ts."
+        breadcrumbs={<DashboardBreadcrumbs />}
       >
         <ButtonLink to="/messages">Send a message</ButtonLink>
         <ButtonLink to="/templates/new" variant="outline">
@@ -67,17 +77,17 @@ function Dashboard() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold">Recent messages</h3>
-            <Link
-              to="/messages"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              View all
-            </Link>
-          </div>
+      <Tabs defaultValue="activity" className="gap-4">
+        <TabsList variant="line">
+          <TabsTrigger value="activity">Recent messages</TabsTrigger>
+          <TabsTrigger value="templates">Top templates</TabsTrigger>
+          <TabsTrigger value="contacts">Contacts</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="activity">
+          <SectionHeading to="/messages" label="View all">
+            Recent messages
+          </SectionHeading>
 
           <Table>
             <TableHeader>
@@ -115,49 +125,133 @@ function Dashboard() {
               )}
             </TableBody>
           </Table>
-        </section>
+        </TabsContent>
 
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Top templates</CardTitle>
-            <CardDescription>
-              Sends per template in the mock queue
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {stats?.topTemplates.length ? (
-              stats.topTemplates.map((template) => (
-                <div key={template.code} className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {template.name}
-                    </p>
-                    <p className="truncate font-mono text-xs text-muted-foreground">
-                      {template.code}
-                    </p>
+        <TabsContent value="templates">
+          <SectionHeading to="/templates" label="Manage templates">
+            Top templates
+          </SectionHeading>
+
+          <Card size="sm">
+            <CardContent className="flex flex-col gap-3">
+              {stats?.topTemplates.length ? (
+                stats.topTemplates.map((template) => (
+                  <div key={template.code} className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {template.name}
+                      </p>
+                      <p className="truncate font-mono text-xs text-muted-foreground">
+                        {template.code}
+                      </p>
+                    </div>
+                    <Badge tone="brand">{template.sends} sends</Badge>
                   </div>
-                  <Badge tone="brand">{template.sends} sends</Badge>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {overview.isPending
-                  ? 'Loading templates…'
-                  : 'No template activity yet.'}
-              </p>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Link
-              to="/templates"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              Manage templates
-            </Link>
-          </CardFooter>
-        </Card>
-      </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {overview.isPending
+                    ? 'Loading templates…'
+                    : 'No template activity yet.'}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contacts">
+          <SectionHeading to="/contacts" label="Manage contacts">
+            Contacts
+          </SectionHeading>
+
+          <ContactsTab />
+        </TabsContent>
+      </Tabs>
     </div>
+  )
+}
+
+/** Home / Dashboard trail shown above the page title. */
+function DashboardBreadcrumbs() {
+  return (
+    <Breadcrumb>
+      <BreadcrumbList className="text-xs">
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/">Home</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Dashboard</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  )
+}
+
+function SectionHeading({
+  to,
+  label,
+  children,
+}: {
+  to: '/messages' | '/templates' | '/contacts'
+  label: string
+  children: string
+}) {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-3">
+      <h3 className="text-sm font-semibold">{children}</h3>
+      <Link
+        to={to}
+        className="text-sm font-medium text-primary hover:underline"
+      >
+        {label}
+      </Link>
+    </div>
+  )
+}
+
+function ContactsTab() {
+  const contacts = useQuery({ queryKey: ['contacts'], queryFn: listContacts })
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Phone</TableHead>
+          <TableHead>Group</TableHead>
+          <TableHead>Status</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {contacts.data?.length ? (
+          contacts.data.map((contact: Contact) => (
+            <TableRow key={contact.id}>
+              <TableCell className="whitespace-nowrap font-medium">
+                {contact.name}
+              </TableCell>
+              <TableCell className="whitespace-nowrap font-mono text-xs">
+                {contact.phone}
+              </TableCell>
+              <TableCell>{contact.group}</TableCell>
+              <TableCell>
+                {contact.optedOut ? (
+                  <Badge tone="danger">Opted out</Badge>
+                ) : (
+                  <Badge tone="success">Reachable</Badge>
+                )}
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableEmpty colSpan={4}>
+            {contacts.isPending ? 'Loading contacts…' : 'No contacts yet.'}
+          </TableEmpty>
+        )}
+      </TableBody>
+    </Table>
   )
 }
 
