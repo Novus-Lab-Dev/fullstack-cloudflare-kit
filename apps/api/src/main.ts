@@ -22,9 +22,9 @@ const bootstrap = new AppBootstrap();
 
 export default {
   fetch: bootstrap.app.fetch,
-  scheduled(event: ScheduledEvent, env: AppEnv['Bindings'], ctx: ExecutionContext) {
-    bootstrap.appModule.scheduled(event, env, ctx)
-  },
+  // scheduled(event: ScheduledEvent, env: AppEnv['Bindings'], ctx: ExecutionContext) {
+  //   bootstrap.appModule.scheduled(event, env, ctx)
+  // },
   queue(batch: MessageBatch<QueueJob>, env: AppEnv['Bindings'], ctx: ExecutionContext) {
     bootstrap.appModule.queue(batch, env, ctx)
   },
